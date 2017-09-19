@@ -1,0 +1,34 @@
+{
+  "name": "string-template",
+  "version": "1.0.0",
+  "description": "create usefull html node wrapper object with es6 template string.",
+  "main": "src/StringTemplate.js",
+  "scripts": {
+    "test": "./bin/babel-tape-runner ./test/**/*.test.js | ./bin/tap-spec",
+    "monitor": "nodemon -x \"./bin/babel-tape-runner ./test/**/*.test.js | ./bin/tap-spec\"",
+    "prepublishOnly": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cartok/string-template"
+  },
+  "author": "Dennis Weiershäuser <dennis.weiershaeuser@l3p-cv.com>",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^8.0.0",
+    "babel-plugin-lodash": "^3.2.11",
+    "babel-preset-env": "^1.6.0",
+    "babel-tape-runner": "^2.0.1",
+    "eslint": "^4.5.0",
+    "eslint-plugin-flowtype": "^2.35.0",
+    "nodemon": "^1.12.1",
+    "sinon": "^3.2.1",
+    "tap-simple": "^0.3.1",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.8.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.4"
+  }
+}
