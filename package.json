@@ -21,7 +21,7 @@
     "url": "https://github.com/cartok/string-template"
   },
   "author": "Dennis Weiershäuser <dennis.weiershaeuser@l3p-cv.com>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "devDependencies": {
     "babel-cli": "*",
     "babel-eslint": "*",
