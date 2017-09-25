@@ -1,6 +1,7 @@
 [ignore]
 .*/static/.*
 .*/build/.*
+.*/built/.*
 .*/dist/.*
 .*/node_modules/.*
 

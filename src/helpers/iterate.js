@@ -4,7 +4,7 @@
  * If the callback function itself does not call 'return', the iterate function
  * will return false after executing the recursion.
  */
-export default (n, cb) => {
+export default (n: Node, cb: Function) => {
     let itCounter = 0
     const iterate = (n) => {
         if (n !== null && n.nodeType === Node.ELEMENT_NODE) {
@@ -27,3 +27,4 @@ export default (n, cb) => {
 
     return false
 }
+

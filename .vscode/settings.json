@@ -1,0 +1,50 @@
+{
+    "files.exclude": {
+        // recursive
+        "**/.awcache": true,    
+        "**/.git": true,        
+        "**/node_modules": true,
+        
+        // root
+        "static": true,         
+        "build": true,         
+        "built": true,         
+        "dist": true,         
+        "node_modules": true,
+        "__pycache__": true, 
+
+        // filetype
+        "*.py" : true,
+
+        // specific
+        "package-lock.json": true,
+        "yarn.lock": true
+    },
+    "search.exclude": {
+        // recursive
+        "**/.awcache": true,    
+        "**/.git": true,        
+        "**/node_modules": true,
+        
+        // root
+        "static": true,
+        "build": true,         
+        "built": true,         
+        "dist": true,                  
+        "node_modules": true,
+        "__pycache__": true, 
+
+        // filetype
+        "*.py" : true,
+
+        // specific
+        "package-lock.json": true,
+        "yarn.lock": true
+    },
+    "git.ignoreLimitWarning": true,
+    "editor.formatOnSave": false,
+    "html.format.enable": false,
+    "typescript.format.enable": false,
+    "javascript.format.enable": false,
+    "javascript.validate.enable": false
+}

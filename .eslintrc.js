@@ -4,9 +4,12 @@ module.exports = {
         worker: true,
         jquery: true,
         es6: true,
-        node: true
+        node: true,
+        commonjs: true,
+        mocha: true,
     },
     globals: {
+        Cookies: true,
     },
     parser: "babel-eslint",
     parserOptions: {

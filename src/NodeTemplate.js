@@ -1,22 +1,14 @@
 import iterate from "./helpers/iterate"
 
-const htmlParser = new DOMParser()
+// @DOMParser: this needs a headless browser for testing.
+const htmlParser = new window.DOMParser()
 
-
-export default class StringTemplate {
-    constructor(htmlString, options) {
-        return createStringTemplate(htmlString, options)
-    }
-}
-
-
-function cleanInputString(html) {
-
+function cleanInputString(html: String) {
+    
     // remove all newlines, tabs and returns from the html string to create one line
     // regex: [\n\t\r]
     // subst: null
     html = html.replace(/[\n\t\r]/g, "")
-
 
     // remove all whitespace between tags but not inside of tags
     // regex: >\s*<
@@ -59,7 +51,7 @@ function cleanInputString(html) {
     // console.log("cleaned html string:", html)
     return html
 }
-function createStringTemplate(html) {
+function createNodeTemplate(html: String) {
 
     // clean
     const text = cleanInputString(html)
@@ -99,4 +91,10 @@ function createStringTemplate(html) {
     // console.log(template)
     
     return template
+}
+
+export default class NodeTemplate {
+    constructor(htmlString: String, options: Object) {
+        return createNodeTemplate(htmlString, options)
+    }
 }
