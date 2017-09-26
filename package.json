@@ -1,8 +1,8 @@
 {
   "name": "dom-node-template",
-  "version": "1.0.0",
+  "version": "1.0.0-R1",
   "description": "create usefull html node wrapper object with es6 template string.",
-  "main": "./build/StringTemplate.js",
+  "main": "./build/NodeTemplate.js",
   "scripts": {
     "sound:plock": "play -q -v 0.2 $(find /usr/share/sounds/ -type f -name *device-added* | head -n 1)",
     "sound:microwave": "play -q -v 0.1 $(find /usr/share/sounds/ -type f -name *complete* | head -n 1)",
@@ -33,9 +33,9 @@
     "eslint": "*",
     "eslint-plugin-flowtype": "*",
     "flow-bin": "*",
-    "jquery": "^3.2.1",
-    "jsdom": "^11.2.0",
-    "jsdom-global": "^3.0.2",
+    "jquery": "3.x.x",
+    "jsdom": "*",
+    "jsdom-global": "*",
     "mocha": "*",
     "nodemon": "*"
   },

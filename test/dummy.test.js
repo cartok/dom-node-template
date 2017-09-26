@@ -1,7 +1,7 @@
 // add chai to env
-import chai from "chai"
+import { should } from "chai"
 import { expect } from "chai"
-chai.should()
+should()
 
 // add jquery to env
 import $ from "jquery"
