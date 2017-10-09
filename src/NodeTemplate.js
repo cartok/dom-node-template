@@ -10,6 +10,25 @@ function cleanInputString(html: String) {
     // subst: null
     html = html.replace(/[\n\t\r]/g, "")
 
+    // style multiline specific:
+    // ------------------------------------------------------------------
+    // remove all spaces > 2 
+    // regex: \s{2,}
+    // subst: null
+    html = html.replace(/\s{2,}/g, "")
+    
+    // add space after every ; in style attributes
+    // regex: ;([^\s])
+    // subst: ; $1
+    html = html.replace(/;([^\s])/g, "; $1")
+    
+    // remove space before "> close combination
+    // regex: \s(">)
+    // subst: $1
+    html = html.replace(/\s(">)/g, "$1")    
+    // ------------------------------------------------------------------
+
+
     // remove all whitespace between tags but not inside of tags
     // regex: >\s*<
     // subst: ><
@@ -31,24 +50,22 @@ function cleanInputString(html: String) {
     html = html.replace(/\s*</g, "<")
 
     // remove space between opening tag and first attribute
-    // <body    id=".+"></body> -> <body id=".+"></body>
     // regex: (<\w*)(\s{2,})
     // subst: $1\s
     html = html.replace(/(<\w+)(\s{2,})/g, "$1 ")
 
     // remove space between attributes (trailing space)
-    // <body id=".+"   class=".+."></body> -> <body id=".+" class=".+"></body>
     // regex: ([\w-_]+="[\w\s-_]+")(\s*(?!>))
     // subst: $1\s
     html = html.replace(/([\w-_]+="[\w\s-_]+")(\s*(?!>))/g, "$1 ")
 
     // remove space between last attribute and closing tag
-    // <body id=".+"   ></body> -> <body id=".+"></body>
     // regex: (\w+="\w+")(\s+)>
     // subst: $1>
     html = html.replace(/([\w-_]+="[\w\s-_]+")(\s{2,})>/g, "$1>")
+    
 
-    // console.log("cleaned html string:", html)
+    console.log("cleaned html string:", html)
     return html
 }
 function createNodeTemplate(html: String) {

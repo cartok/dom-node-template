@@ -7,14 +7,12 @@
     "sound:plock": "play -q -v 0.2 $(find /usr/share/sounds/ -type f -name *device-added* | head -n 1)",
     "sound:microwave": "play -q -v 0.1 $(find /usr/share/sounds/ -type f -name *complete* | head -n 1)",
     "sound:trash": "play -q -v 0.15 $(find /usr/share/sounds/ -type f -name *trash*  | head -n 1)",
-    "clean:js": "rm $(find ./build/ -type f -regex '.*\\.[jt]sx?'); npm run --silent sound:trash",
-    "clean:dir": "rm -rf ./build; npm run --silent sound:trash",
-    "build": "clear; npm run --silent clean:dir; babel ./src --out-dir ./build; npm run --silent sound:microwave",
-    "test": "clear; npm run --silent build; ./bin/mocha --compilers js:babel-core/register --require jsdom-global/register; npm run --silent sound:plock",
-    "dev": "nodemon -x \"rm -rf ./build; babel ./src --out-dir ./build;./bin/mocha --compilers js:babel-core/register --require jsdom-global/register; npm run --silent sound:plock\"",
-    "prepublishOnly": "npm run --silent test",
-    "pp": "clear; npm version patch; npm publish",
-    "p": "clear; npm publish"
+    "clean:js": "rm $(find ./build/ -type f -regex '.*\\.[jt]sx?') && npm run --silent sound:trash",
+    "clean:dir": "rm -rf ./build && npm run --silent sound:trash",
+    "build": "clear; npm run --silent clean:dir && babel ./src --out-dir ./build && npm run --silent sound:microwave",
+    "test": "clear; npm run --silent build && ./bin/mocha --compilers js:babel-core/register --require jsdom-global/register && npm run --silent sound:plock",
+    "test:monitor": "nodemon -x \"rm -rf ./build; babel ./src --out-dir ./build && ./bin/mocha --compilers js:babel-core/register --require jsdom-global/register && npm run --silent sound:plock\"",
+    "prepublishOnly": "npm run --silent test"
   },
   "repository": {
     "type": "git",

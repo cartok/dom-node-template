@@ -13,7 +13,11 @@ describe("Node Template Tests", () => {
     describe("create a node and validate its state.", () => {
         const s = new NodeTemplate(`
             <div id="container">
-                <h1>hello kitty</h1>
+                <h1 class="hodor" style="
+                    backgroud-color: #123;
+                    color: #123;
+                    width: 123px; 
+                ">hello kitty</h1>
             </div>
         `)
         it("should create node template", () => {
