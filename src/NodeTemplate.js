@@ -65,7 +65,7 @@ function cleanInputString(html: String) {
     html = html.replace(/([\w-_]+="[\w\s-_]+")(\s{2,})>/g, "$1>")
     
 
-    console.log("cleaned html string:", html)
+    // console.log("cleaned html string:", html)
     return html
 }
 function createNodeTemplate(html: String) {
