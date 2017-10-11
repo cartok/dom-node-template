@@ -68,7 +68,7 @@ function cleanInputString(html: String) {
     // console.log("cleaned html string:", html)
     return html
 }
-function createNodeTemplate(html: String) {
+function createNodeTemplate(html: String, options: any) {
 
     // clean
     const text = cleanInputString(html)
@@ -76,18 +76,10 @@ function createNodeTemplate(html: String) {
     // parse
     const doc = htmlParser.parseFromString(text, "text/html")
 
-    
     // create DocumentFragment of content
     const fragment = window.document.createDocumentFragment()
     Array.from(doc.body.childNodes).forEach(n => fragment.appendChild(n.cloneNode(true)))
 
-    // add root reference
-    const root = (fragment.childNodes.length === 1) ? fragment.firstChild : undefined
-    const hasRoot = (root === undefined) ? false : true
-    if(!hasRoot){
-        console.warn("got no root element!")
-    }
-    
     // add element references from data-tref and id attributes
     const refs = {}
     const ids = {}
@@ -103,11 +95,22 @@ function createNodeTemplate(html: String) {
             ids[n.id] = n
         }
     })
-    
-    const template = { text, fragment, root, refs, ids }
-    // console.log(template)
-    
-    return template
+
+    if(options.nodeOnly === false){
+        // add root reference
+        const root = (fragment.childNodes.length === 1) ? fragment.firstChild : undefined
+        const hasRoot = (root === undefined) ? false : true
+        if(!hasRoot){
+            console.warn("Got no root element!")
+            console.warn(" > Use NodeTemplate.fragment to append your template.")
+        }
+        // add stuff to a template object
+        const template = { text, fragment, root, refs, ids }
+        return template
+    } else {
+        // just return the fragment
+        return fragment
+    }
 }
 
 export default class NodeTemplate {
