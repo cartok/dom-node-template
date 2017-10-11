@@ -3,6 +3,18 @@ import iterate from "./helpers/iterate"
 // @DOMParser: this needs a headless browser for testing.
 const htmlParser = new window.DOMParser()
 
+const DEFAULT_OPTIONS = {
+    nodeOnly: false,
+}
+
+export default class NodeTemplate {
+    constructor(htmlString: String, options: Object) {
+        options = Object.assign({}, DEFAULT_OPTIONS, options)
+        return createNodeTemplate(htmlString, options)
+    }
+}
+
+
 function cleanInputString(html: String) {
     
     // remove all newlines, tabs and returns from the html string to create one line
@@ -113,8 +125,3 @@ function createNodeTemplate(html: String, options: any) {
     }
 }
 
-export default class NodeTemplate {
-    constructor(htmlString: String, options: Object) {
-        return createNodeTemplate(htmlString, options)
-    }
-}
