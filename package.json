@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cartok/string-template"
+    "url": "https://github.com/cartok/dom-node-template"
   },
   "author": "Dennis Weiershäuser <dennis.weiershaeuser@l3p-cv.com>",
   "license": "MIT",
