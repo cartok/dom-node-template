@@ -2,6 +2,16 @@
   "name": "dom-node-template",
   "version": "1.1.1",
   "description": "create usefull html node wrapper object with es6 template string.",
+  "keywords": [
+    "dom",
+    "node",
+    "template",
+    "jsx",
+    "dom parser",
+    "template string",
+    "string template",
+    "template literal"
+  ],
   "main": "./build/NodeTemplate.js",
   "scripts": {
     "sound:plock": "play -q -v 0.2 $(find /usr/share/sounds/ -type f -name *device-added* | head -n 1)",
