@@ -32,6 +32,41 @@ The constructor returns an Object containing your **HTML in a document fragment*
 }
 ```
 
+
+You might be used to...
+
+
+**Advantages:**
+```javascript
+
+const html = new NodeTemplate(`
+    <div id="app-container">
+        <h1>foo</h1>
+        <div id="app-bar">
+
+        </div>
+    </div>
+`)
+
+
+
+
+
+### Working with jQuery
+```javascript
+const html = new NodeTemplate(`
+    <div id="app-container">
+        <h1>foo</h1>
+        <div id="app-bar">
+        
+        </div>
+    </div>
+`)
+$("#YouCouldHaveUsed li").on("click", () => "the selection API as this")
+$()
+```
+
+
 ### Usage Example:
 #### Definition of a ListView class 
 ```javascript
@@ -89,9 +124,12 @@ const list = new ListView({
 // > imagine appView.html is another NodeTemplate.
 appView.html.appendChild(list.fragment)
 
-// VIEW BINDING
+// VIEW BINDING 
 $(appView.html.refs["something"]).on("click", () => {
     list.addItem(e.target.innerText)
 })
+
+// or just
+list.add("music")
 
 ```
