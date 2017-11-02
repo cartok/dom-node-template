@@ -1,5 +1,5 @@
 {
-  "name": "dom-node-template",
+  "name": "dom-node-template-es6",
   "version": "1.1.1",
   "description": "create usefull html node wrapper object with es6 template string.",
   "keywords": [
@@ -18,10 +18,10 @@
     "sound:microwave": "play -q -v 0.1 $(find /usr/share/sounds/ -type f -name *complete* | head -n 1)",
     "sound:trash": "play -q -v 0.15 $(find /usr/share/sounds/ -type f -name *trash*  | head -n 1)",
     "clean:js": "rm $(find ./build/ -type f -regex '.*\\.[jt]sx?') && npm run --silent sound:trash",
-    "clean:dir": "rm -rf ./build && npm run --silent sound:trash",
-    "build": "clear; npm run --silent clean:dir && babel ./src --out-dir ./build && npm run --silent sound:microwave",
+    "clean:dir": "rm -rf ./build && mkdir build && npm run --silent sound:trash",
+    "build": "clear; npm run --silent clean:dir && cp -r ./src/* ./build/ && npm run --silent sound:microwave",
     "test": "clear; npm run --silent build && ./bin/mocha --compilers js:babel-core/register --require jsdom-global/register && npm run --silent sound:plock",
-    "test:monitor": "nodemon -x \"rm -rf ./build; babel ./src --out-dir ./build && ./bin/mocha --compilers js:babel-core/register --require jsdom-global/register && npm run --silent sound:plock\"",
+    "test:monitor": "nodemon -x \"rm -rf ./build; cp -r ./src/* ./build/ && ./bin/mocha --compilers js:babel-core/register --require jsdom-global/register && npm run --silent sound:plock\"",
     "prepublishOnly": "npm run --silent test"
   },
   "repository": {
