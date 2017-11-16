@@ -1,4 +1,14 @@
-import iterate from "./helpers/iterate"
+/**
+ * @todo: add methods for appending and removing nodes
+ * ==============> (getNode, addNode, removeNode)
+ * @thesis:
+ * - does the 'DOMParser' find out latest SVG namespace on its own?
+ * - is there a need to create SVG nodes by namespace? 
+ * 
+ * @todo: filter the html comments out of the text. 
+ */
+import iterate from "./helpers/iterate.js"
+
 
 // @DOMParser: this needs a headless browser for testing.
 const htmlParser = new window.DOMParser()
@@ -118,6 +128,7 @@ function createNodeTemplate(html: String, options: any) {
         }
         // add stuff to a template object
         const template = { text, fragment, root, refs, ids }
+
         return template
     } else {
         // just return the fragment
