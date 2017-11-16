@@ -5,14 +5,14 @@
  * - does the 'DOMParser' find out latest SVG namespace on its own?
  * - is there a need to create SVG nodes by namespace? 
  * 
+ * @DOMParser: this needs a headless browser for testing.
+ * 
  * @todo: filter the html comments out of the text. 
  */
 import iterate from "./helpers/iterate.js"
 
 
-// @DOMParser: this needs a headless browser for testing.
-const htmlParser = new window.DOMParser()
-
+const DOMParser = new window.DOMParser()
 const DEFAULT_OPTIONS = {
     nodeOnly: false,
 }
@@ -20,10 +20,50 @@ const DEFAULT_OPTIONS = {
 export default class NodeTemplate {
     constructor(htmlString: String, options: Object) {
         options = Object.assign({}, DEFAULT_OPTIONS, options)
-        return createNodeTemplate(htmlString, options)
+
+        // clean
+        const text = cleanInputString(htmlString)
+
+        // parse
+        const doc = DOMParser.parseFromString(text, "text/html")
+
+        // create DocumentFragment of content
+        this.fragment = window.document.createDocumentFragment()
+        Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
+
+        // add element references from data-tref and id attributes
+        this.refs = {}
+        this.ids = {}
+
+        iterate(this.fragment.firstChild, (n) => {
+            // add node data references
+            if (n.dataset.ref !== undefined) {
+                this.refs[n.dataset.ref] = n
+            }
+
+            // add node id references
+            if (n.id !== "") {
+                this.ids[n.id] = n
+            }
+        })
+
+        // add root reference
+        if(options.nodeOnly === false){
+            this.root = (this.fragment.childNodes.length === 1) ? this.fragment.firstChild : undefined
+            const hasRoot = (root === undefined) ? false : true
+            if(!hasRoot){
+                console.warn("Got no root element!")
+                console.warn("Use NodeTemplate.fragment to append your template.")
+            }
+        }
+    }
+    getNode(query: String){
+    }
+    addNode(n: NodeTemplate){
+    }
+    removeNode(n: NodeTemplate | String){
     }
 }
-
 
 function cleanInputString(html: String) {
     
@@ -90,49 +130,3 @@ function cleanInputString(html: String) {
     // console.log("cleaned html string:", html)
     return html
 }
-function createNodeTemplate(html: String, options: any) {
-
-    // clean
-    const text = cleanInputString(html)
-
-    // parse
-    const doc = htmlParser.parseFromString(text, "text/html")
-
-    // create DocumentFragment of content
-    const fragment = window.document.createDocumentFragment()
-    Array.from(doc.body.childNodes).forEach(n => fragment.appendChild(n.cloneNode(true)))
-
-    // add element references from data-tref and id attributes
-    const refs = {}
-    const ids = {}
-
-    iterate(fragment.firstChild, (n) => {
-        // add node data references
-        if (n.dataset.ref !== undefined) {
-            refs[n.dataset.ref] = n
-        }
-
-        // add node id references
-        if (n.id !== "") {
-            ids[n.id] = n
-        }
-    })
-
-    if(options.nodeOnly === false){
-        // add root reference
-        const root = (fragment.childNodes.length === 1) ? fragment.firstChild : undefined
-        const hasRoot = (root === undefined) ? false : true
-        if(!hasRoot){
-            console.warn("Got no root element!")
-            console.warn(" > Use NodeTemplate.fragment to append your template.")
-        }
-        // add stuff to a template object
-        const template = { text, fragment, root, refs, ids }
-
-        return template
-    } else {
-        // just return the fragment
-        return fragment
-    }
-}
-
