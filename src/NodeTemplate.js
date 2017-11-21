@@ -9,36 +9,161 @@
  * 
  * @todo: filter the html comments out of the text. 
  */
+
+/**
+ * @feature: automated xml type distinction
+ * use-case: html text including svg
+ * requirements: if no type parameter was passed in constructor
+ *
+ * example:
+ * html = `
+ * <div id="html-0">
+ *      <h1>text</h1>
+ *      <h2>text</h2>
+ *      <svg id="svg-1">
+ *          <g><rect></rect></g>
+ *          <g>
+ *              <foreignObject>
+ *                  <div id="foreignObject"></div>
+ *              </foreignObject>
+ *          </g>
+ *      </svg>
+ *      <div>
+ *          <svg id="svg-2"></svg>
+ *      </div>
+ * </div>`
+ * 
+ * separation algorithm ideas:
+ * - before cleanInputString() divide the string into parts:
+ * <div>
+ *      <h1>text</h1>
+ *          <!-- svg 1 was here -->
+ *      <div>
+ *          <svg></svg>
+ *      </div>
+ * </div>`
+ * 
+ * <svg>
+ *      <g><rect></rect></g>
+ *      <g>
+ *          <foreignObject></foreignObject>
+ *      </g>
+ * </svg>
+ * 
+ *      <div>
+ *           <svg></svg>
+ *      </div>
+ * 
+ */
 import iterate from "./helpers/iterate.js"
 
 
 const DOMParser = new window.DOMParser()
 const DEFAULT_OPTIONS = {
+    type: "text/html", // "application/xml" "image/svg+xml"
     nodeOnly: false,
 }
 
+/**
+ * About 'DOMStrings' for querys: https://developer.mozilla.org/en-US/docs/Web/API/DOMString
+ */
 export default class NodeTemplate {
-    constructor(htmlString: String, options: Object) {
+    /**
+     * 
+     * @param {String} text  
+     * @param {String} type is a MIME type (text/html, image/svg+xml, text/xml)
+     * @param {any} options 
+     */
+    constructor(text: String, options: Object) {
+        if(typeof text !== "string"){
+            throw new Error("you need to provide a xml string as first parameter.")
+        }
+
+        // clean the input string and transform it to a one-line string
+        this.text = cleanInputString(text)
+
+        // check if start- and closing-tag match
+        let matches = this.text.match(/^<([a-zA-Z\d]*)[^>]*>.*<\/([a-zA-Z\d]*)[^>]*>$/)
+        if(matches === null){
+            throw new Error("your start and closing tags seem to be invalid.")
+        } else {
+            // remove the first match (it is the whole string)
+            matches = matches.filter((match, i) => i > 0)
+        }
+        const firstTag = matches[0]
+        const lastTag = matches[1]
+        const tagsMatch = (firstTag === lastTag)
+
+        if(!tagsMatch){
+            throw new Error("the start and close tag of your xml text do not match.")
+        }
+
+        // if no mime type parameter is given find out the mime type
+        if(options === undefined || options !== undefined && options.type === undefined){
+            // automated svg or html distinction
+            // assumption: if the html does not start and end with "<svg>" it is html 
+            console.warn("automated html and svg distinction only works if your svg starts with the <svg>-tag.")
+            const generatedType = (firstTag === "svg") ? "image/svg+xml" : "text/html"
+            if(options === undefined){
+                options = {}   
+            }
+            options.type = generatedType
+            // console.log("overridden type:", generatedType)
+        }
+
+        // merge default options with options
         options = Object.assign({}, DEFAULT_OPTIONS, options)
 
-        // clean
-        const text = cleanInputString(htmlString)
+        // allow 'easy' type specification
+        options.type = (options.type === "svg") ? "image/svg+xml" : options.type
+        options.type = (options.type === "html") ? "text/html" : options.type
+        options.type = (options.type === "xml") ? "application/xml" : options.type
 
         // parse
-        const doc = DOMParser.parseFromString(text, "text/html")
+        const doc = DOMParser.parseFromString(this.text, options.type)
 
-        // create DocumentFragment of content
-        this.fragment = window.document.createDocumentFragment()
-        Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
+        // add type info
+        this.type = options.type
 
-        // add element references from data-tref and id attributes
+        // @todo: add new feature to allow svg in html text
+        // (for the first version ignore foreignObject)
+
+        // add fragment
+        switch(options.type){
+            case "text/html":
+                // the 'DOMParser' returns a whole document. 
+                // create a new lightweight 'DocumentFragment', 
+                // and add all body nodes to it.
+                this.fragment = window.document.createDocumentFragment()
+                Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
+                break
+            case "application/xml":
+                console.warn("xml support not finished")
+                break
+            case "image/svg+xml":
+                // the 'DOMParser' returns a SVGDocumentFragment. 
+                this.fragment = doc
+                break
+        }
+
+        // add element references from 'data-tref' and 'id' attributes
         this.refs = {}
         this.ids = {}
 
         iterate(this.fragment.firstChild, (n) => {
             // add node data references
-            if (n.dataset.ref !== undefined) {
-                this.refs[n.dataset.ref] = n
+            // @thesis: for svg 2 the data-* implementation is not finished yet.
+            let ref = undefined
+            if(options.type === "image/svg+xml"){
+                ref = n.getAttribute("data-ref")
+                if(ref !== null){
+                    this.refs[ref] = n
+                }
+            } else {
+                ref = n.dataset.ref
+                if (ref !== undefined ) {
+                    this.refs[ref] = n
+                }
             }
 
             // add node id references
@@ -56,12 +181,72 @@ export default class NodeTemplate {
                 console.warn("Use NodeTemplate.fragment to append your template.")
             }
         }
+
     }
-    getNode(query: String){
+    /**
+     * The method returns a 'Node' of the 'NodeTemplate.'
+     * @param {String} query: Can be .class, #id or 'DOMString'. 
+     */
+    getNode(query: String, options: any){
+        console.warn("getNode() is not finished yet.")
+        options = Object.assign({ firstMatch: true }, options)
+        switch(getQueryType(query)){
+            case "id":
+                return this.ids[query]
+            case "class":
+            case "query":
+                return options.firstMatch === true 
+                    ? this.fragment.querySelector(query)
+                    : this.fragment.querySelectorAll(query)
+            default: 
+                throw new Error("query is not valid.")
+        }
     }
-    addNode(n: NodeTemplate){
+    /**
+     * The method combines 'NodeTemplates'
+     * - add n.ids to this.ids [ ]
+     * - add n.refs to this.refs [ ]
+     * - update text or remove text? [ ]
+     * - validate added ids and refs. [ ]
+     * @param {Node | String} position is a 'Node' or a 'String'
+     * @param {NodeTemplate} n is another 'NodeTemplate'.
+     */
+    addNode(position: Node | String, n: NodeTemplate){
+        console.warn("addNode() is not finished yet.")
+        switch(getQueryType(position)){
+            case "Node":
+                position.appendChild(n.fragment)
+                break
+            case "id":
+                const parent = this.ids[position]
+                parent.appendChild(n.fragment)
+                break
+            case "class":
+            case "query":
+                throw new Error("class or query is not implemented.")
+            default:
+                throw new Error("position is not valid.")
+        }
     }
-    removeNode(n: NodeTemplate | String){
+    /**
+     * 
+     * @param {Node | String} n 
+     */
+    removeNode(n: Node | String){
+        console.warn("removeNode() is not finished yet.")
+        switch(getQueryType(n)){
+            case "Node":
+                throw new Error("removeNode() not implemented for 'Node'.")
+            case "id":
+                this.ids[n].parentNode.removeChild(this.ids[n])
+                break
+            case "class":
+                throw new Error("removeNode() not implemented for class.")
+            case "query":
+                throw new Error("removeNode() not implemented for query.")
+            default:
+                throw new Error("n is not valid.")
+        }
     }
 }
 
@@ -129,4 +314,9 @@ function cleanInputString(html: String) {
 
     // console.log("cleaned html string:", html)
     return html
+}
+function getQueryType(query: String | Node){
+    return  query instanceof Node ? "Node" : 
+            query.charAt(0) === "." ? "id" : 
+            query.charAt(0) === "#" ? "class" : "query"
 }
