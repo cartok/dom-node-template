@@ -175,8 +175,7 @@ export default class NodeTemplate {
         // add root reference
         if(options.nodeOnly === false){
             this.root = (this.fragment.childNodes.length === 1) ? this.fragment.firstChild : undefined
-            const hasRoot = (root === undefined) ? false : true
-            if(!hasRoot){
+            if(this.root === undefined){
                 console.warn("Got no root element!")
                 console.warn("Use NodeTemplate.fragment to append your template.")
             }
