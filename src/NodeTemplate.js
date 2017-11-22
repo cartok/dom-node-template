@@ -60,9 +60,10 @@ import iterate from "./helpers/iterate.js"
 
 const DOMParser = new window.DOMParser()
 const DEFAULT_OPTIONS = {
-    type: "text/html", // "application/xml" "image/svg+xml"
+    type: "text/html",      // "image/svg+xml"
     nodeOnly: false,
 }
+const VALID_TYPES = [ "svg", "image/svg+xml", "html", "text/html" ]
 
 /**
  * About 'DOMStrings' for querys: https://developer.mozilla.org/en-US/docs/Web/API/DOMString
@@ -78,10 +79,20 @@ export default class NodeTemplate {
         if(typeof text !== "string"){
             throw new Error("you need to provide a xml string as first parameter.")
         }
+        if(options !== undefined && options.type !== undefined){
+            if(VALID_TYPES.find(options.type) === undefined){
+                if(options.type === "xml" || options.type === "application/xml"){
+                    throw new Error(`invalid type option. xml is not supported. use one of: ${VALID_TYPES.join(",")}.`)
+                } else {
+                    throw new Error(`invalid type option. use one of: ${VALID_TYPES.join(",")}.`)
+                }
+            }
+        }
 
         // clean the input string and transform it to a one-line string
         this.text = cleanInputString(text)
 
+        // @todo: prevent / detect if user has more than a single root node. 
         // check if start- and closing-tag match
         let matches = this.text.match(/^<([a-zA-Z\d]*)[^>]*>.*<\/([a-zA-Z\d]*)[^>]*>$/)
         if(matches === null){
@@ -93,9 +104,10 @@ export default class NodeTemplate {
         const firstTag = matches[0]
         const lastTag = matches[1]
         const tagsMatch = (firstTag === lastTag)
+        // console.warn("this might fail if <div></div><h1></h1>")
 
         if(!tagsMatch){
-            throw new Error("the start and close tag of your xml text do not match.")
+            throw new Error("the start and close tag of your xml text do not match, or you have no root element.")
         }
 
         // if no mime type parameter is given find out the mime type
@@ -104,7 +116,8 @@ export default class NodeTemplate {
             // assumption: if the html does not start and end with "<svg>" it is html 
             console.warn("automated html and svg distinction only works if your svg starts with the <svg>-tag.")
             const generatedType = (firstTag === "svg") ? "image/svg+xml" : "text/html"
-            if(options === undefined){
+            const noOptionParameter = (options === undefined)
+            if(noOptionParameter){
                 options = {}   
             }
             options.type = generatedType
@@ -117,42 +130,58 @@ export default class NodeTemplate {
         // allow 'easy' type specification
         options.type = (options.type === "svg") ? "image/svg+xml" : options.type
         options.type = (options.type === "html") ? "text/html" : options.type
-        options.type = (options.type === "xml") ? "application/xml" : options.type
-
-        // parse
-        const doc = DOMParser.parseFromString(this.text, options.type)
 
         // add type info
         this.type = options.type
 
-        // @todo: add new feature to allow svg in html text
-        // (for the first version ignore foreignObject)
+        // for all <svg>: replace existing xmlns attribute or add it. 
+        // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?
+        // match xmlns attribute: (\sxmlns=["'][^\s]+["'])
+        // match to end of tag: ([^>]*>)
+        // > the resulting pattern will remove old xmlns attribute 
+        // > and add a new xmlns attribute directly after the tag name
+        this.text = this.text.replace(/(<svg)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/2000/svg"$2$5`)
+
+        // if "image/svg+xml" for first element: replace existing xmlns attribute or add it. 
+        // same pattern like before, but for any starting tag and not global.
+        if(options.type === "image/svg+xml"){
+            this.text = this.text.replace(/(<[a-zA-Z]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/, `$1 xmlns="http://www.w3c.org/2000/svg"$2$5`)
+        }
+
+        // for all <foreignObject>.firstChild: replace existing xmlns attribute or add it. 
+        // match <foreignObject anything><firstChildTag: (<foreignObject[^>]*><[a-zA-Z\d]+)
+        // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?
+        // match xmlns attribute: (\sxmlns=["'][^\s]+["'])
+        // match to end of tag: ([^>]*>)
+        this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/1999/xhtml"$2$5`)
+
+        // parse
+        const doc = DOMParser.parseFromString(this.text, options.type)
 
         // add fragment
         switch(options.type){
             case "text/html":
                 // the 'DOMParser' returns a whole document. 
                 // create a new lightweight 'DocumentFragment', 
-                // and add all body nodes to it.
+                // and add all body.childNodes to it.
                 this.fragment = window.document.createDocumentFragment()
+                // @research, @dagre: why do i use clone node here?
                 Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
                 break
-            case "application/xml":
-                console.warn("xml support not finished")
-                break
             case "image/svg+xml":
+                // @research: can i append a svg fragment to a svg or do i need documentElement anyways?
                 // the 'DOMParser' returns a SVGDocumentFragment. 
-                this.fragment = doc
+                this.svgFragment = doc
+                this.fragment = window.document.createDocumentFragment()
+                Array.from(this.svgFragment.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
                 break
         }
 
         // add element references from 'data-tref' and 'id' attributes
         this.refs = {}
         this.ids = {}
-
         iterate(this.fragment.firstChild, (n) => {
             // add node data references
-            // @thesis: for svg 2 the data-* implementation is not finished yet.
             let ref = undefined
             if(options.type === "image/svg+xml"){
                 ref = n.getAttribute("data-ref")
@@ -173,13 +202,11 @@ export default class NodeTemplate {
         })
 
         // add root reference
-        if(options.nodeOnly === false){
-            this.root = (this.fragment.childNodes.length === 1) ? this.fragment.firstChild : undefined
-            if(this.root === undefined){
-                console.warn("Got no root element!")
-                console.warn("Use NodeTemplate.fragment to append your template.")
-            }
-        }
+        // if(options.type === "image/svg+xml"){
+        //     this.root = this.fragment // @warning: its no document fragment
+        // } else {
+            this.root = this.fragment.firstChild
+        // }
 
     }
     /**
