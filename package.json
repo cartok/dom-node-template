@@ -51,7 +51,12 @@
     "mocha": "*",
     "nodemon": "*"
   },
-  "dependencies": {},
+  "dependencies": {
+    "html-element-attributes": "^1.3.0",
+    "html-tag-names": "^1.1.2",
+    "svg-element-attributes": "^1.2.0",
+    "svg-tag-names": "^1.1.1"
+  },
   "nodemonConfig": {
     "ignore": [
       "build",
