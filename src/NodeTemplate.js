@@ -135,12 +135,14 @@ export default class NodeTemplate {
         this.type = options.type
 
         // for all <svg>: replace existing xmlns attribute or add it. 
+        // for all <foreignObject>.firstChild: replace existing xmlns attribute or add it. 
         // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?
         // match xmlns attribute: (\sxmlns=["'][^\s]+["'])
         // match to end of tag: ([^>]*>)
         // > the resulting pattern will remove old xmlns attribute 
         // > and add a new xmlns attribute directly after the tag name
         this.text = this.text.replace(/(<svg)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/2000/svg"$2$5`)
+        this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/1999/xhtml"$2$5`)
 
         // if "image/svg+xml" for first element: replace existing xmlns attribute or add it. 
         // same pattern like before, but for any starting tag and not global.
@@ -148,32 +150,38 @@ export default class NodeTemplate {
             this.text = this.text.replace(/(<[a-zA-Z]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/, `$1 xmlns="http://www.w3c.org/2000/svg"$2$5`)
         }
 
-        // for all <foreignObject>.firstChild: replace existing xmlns attribute or add it. 
-        // match <foreignObject anything><firstChildTag: (<foreignObject[^>]*><[a-zA-Z\d]+)
-        // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?
-        // match xmlns attribute: (\sxmlns=["'][^\s]+["'])
-        // match to end of tag: ([^>]*>)
-        this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/1999/xhtml"$2$5`)
+
+        // handle document child element count 
+        if(options.type === "image/svg+xml"){
+            // document can only 1 childNode (childElementCount == 1)
+        } else if(options.type === "text/html"){
+            // document can have more than 1 childNodes (childElementCount >= 1)
+        }
 
         // parse
-        const doc = DOMParser.parseFromString(this.text, options.type)
+        this.document = DOMParser.parseFromString(this.text, options.type)
+        this.fragment = window.document.createDocumentFragment()
 
-        // add fragment
+        // fill document fragment
+        // the 'DOMParser' returns an extension of 'Document' depending on the MIME-type. 
+        // > create a new lightweight 'DocumentFragment' and add all body.childNodes to it.
+        if(options.type === "image/svg+xml"){
+            // @research: can i append a svg fragment to a svg or do i need documentElement anyways?
+            // the 'DOMParser' returns a 'XMLDocument'. 
+            this.fragment = window.document.createDocumentFragment()
+            Array.from(this.document.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
+        } else if(options.type === "text/html"){
+            // @research, @dagre: why do i use clone node here?
+            // the 'DOMParser' returns a 'HTMLDocument'. 
+            // it is an extension to the 'XMLDocument.
+            // https://www.w3.org/TR/html5/'
+            Array.from(this.document.body.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
+        }
+
         switch(options.type){
             case "text/html":
-                // the 'DOMParser' returns a whole document. 
-                // create a new lightweight 'DocumentFragment', 
-                // and add all body.childNodes to it.
-                this.fragment = window.document.createDocumentFragment()
-                // @research, @dagre: why do i use clone node here?
-                Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
                 break
             case "image/svg+xml":
-                // @research: can i append a svg fragment to a svg or do i need documentElement anyways?
-                // the 'DOMParser' returns a SVGDocumentFragment. 
-                this.svgFragment = doc
-                this.fragment = window.document.createDocumentFragment()
-                Array.from(this.svgFragment.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
                 break
         }
 
