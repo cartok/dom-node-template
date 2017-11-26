@@ -15,7 +15,7 @@ const detectHTML = new NodeTemplate(`
         <div id="id"></div>
     </div>
 `)
-console.dir(detectHTML)
+// console.dir(detectHTML)
 const detectSVG = new NodeTemplate(`
     <svg data-ref="hui" xmlns="http://www.w3.org/2000/svg">
         <g></g>
@@ -34,16 +34,3 @@ describe("Node Template Type Detectino Feature Tests", () => {
         })
     })
 })
-
-
-const oneRoot = new NodeTemplate(`
-    <div id="oneRoot"></div>
-`)
-// console.dir(oneRoot)
-console.dir(oneRoot)
-const multipleRoots = new NodeTemplate(`
-    <div id="multipleRoots-1"></div>
-    <div id="multipleRoots-2"></div>
-`)
-console.dir(multipleRoots)
-// console.log(multipleRoots.info)
