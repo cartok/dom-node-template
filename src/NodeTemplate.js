@@ -32,10 +32,10 @@ export default class NodeTemplate {
     /**
      * TEXT
      * Usage for HTML:              new NodeTemplate(`<tags></tags>`) 
-     * Usage for HTML with SVG:     new NodeTemplate(`<tags></tags>`, { containsSvg: true }) 
+     * Usage for HTML with SVG:     new NodeTemplate(`<tags></tags>`, { hasSvg: true }) 
      * Usage for SVG:               new NodeTemplate(`<tags></tags>`, { isSvg: true }) 
      * @param {String} tagText a string of tags.  
-     * @param {any} options an object with flags: containsSvg, isSvg.
+     * @param {any} options an object with flags: hasSvg, isSvg.
      */
     constructor(tagText: String, options: Object) {
         // parameter handling
@@ -47,7 +47,7 @@ export default class NodeTemplate {
         // - merge default options with options
         // - destructure options
         options = Object.assign(DEFAULT_OPTIONS, options)
-        let { isSvg, containsSvg } = options
+        let { isSvg, hasSvg } = options
 
         // @feature: remove comments
         // clean the input string and transform it to a clean one-line string
@@ -66,17 +66,17 @@ export default class NodeTemplate {
         })()
 
         // @improvement/accuracy: add distinction algorithm using npm packages "svg-tag-names" etc.
-        // if options.isSvg is not given and options.containsSvg is true:
+        // if options.isSvg is not given and options.hasSvg is true:
         // - find out if the 'tagText' it is SVG anyways.
-        if(isSvg === undefined && containsSvg !== true){
+        if(isSvg === undefined && hasSvg !== true){
             // assumption: the 'tagText' is SVG if the 'nodeName' of the first tag is "svg".
             isSvg = (nodeNameFirstTag === "svg") ? true : false
         }
 
         // if <svg> tag(s) exists 
         // - find out if a <foreignObject> tag exist
-        const foreignObjectsExist = (() => {
-            if(isSvg === true || containsSvg === true || hasMultipleSvgs === true){
+        const hasForeignObject = (() => {
+            if(isSvg === true || hasSvg === true || hasMultipleSvgs === true){
                 let matches = this.text.match(/<foreignObject[^>]*>/)
                 return (matches !== null) ? (matches.length > 0) : false
             } else {
@@ -86,8 +86,8 @@ export default class NodeTemplate {
 
         // if <foreignObject> tag exists 
         // - find out if multiple <foreignObject> tags exist
-        const multipleForeignObjects = (() => {
-            if(foreignObjectsExist === true){
+        const hasMultipleForeignObjects = (() => {
+            if(hasForeignObject === true){
                 let matches = this.text.match(/<foreignObject[^>]*>/g)
                 return (matches !== null) ? (matches.length > 1) : false
             } else {
@@ -109,35 +109,39 @@ export default class NodeTemplate {
         // if one or more svgs exist
         // - for all <svg>: replace existing xmlns attribute or add it. 
         // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
-        if(containsSvg === true || hasMultipleSvgs === true){
+        if(hasSvg === true || hasMultipleSvgs === true){
             this.text = this.text.replace(/(<svg)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/2000/svg"$2$5`)
         }
 
         // if <foreignObject>s exist 
         // - for all <foreignObject>.firstChild: replace existing xmlns attribute or add it. 
         // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
-        if(foreignObjectsExist === true){
+        if(hasForeignObject === true){
             this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/1999/xhtml"$2$5`)
         }
 
         // parse
         this.fragment = createDocumentFragment(this.text)
 
-        // add type info text
-        this.info = "It's a"
-        + `${  !isSvg ?                                                                   " HTML Fragment"                     :  " SVG Fragment"  }`
-        + `${  this.fragment.childElementCount > 1 ?                                      " with no unifying root element"     :  " with a unifying root element"  }`
-        // - html text
-        + `${  isSvg && hasMultipleSvgs ?                                                 " containing multiple <svg> tags"   :   " containing just one <svg> tag"  }` 
-        + `${  isSvg && foreignObjectsExist ?                                             " with"                             :   " without"  }`
-        + `${  isSvg && foreignObjectsExist && multipleForeignObjects ?                   " multiple"                         :   " a"  }`
-        + `${  isSvg && foreignObjectsExist && multipleForeignObjects ?                   " <foreignObject> tags."            :   " <foreignObject> tag."  }`
-        // - svg text
-        + `${  !isSvg && hasMultipleSvgs ?                                                " containing multiple"              :   " containing a"  }` 
-        + `${  !isSvg && hasMultipleSvgs ?                                                " <svg> tags"                       :   " <svg> tag"  }` 
-        + `${  !isSvg && containsSvg && foreignObjectsExist ?                             " with"                             :   " without"  } `
-        + `${  !isSvg && containsSvg && foreignObjectsExist && multipleForeignObjects ?   " multiple"                         :   " a"  }` 
-        + `${  !isSvg && containsSvg && foreignObjectsExist && multipleForeignObjects ?   " <foreignObject> tags."            :   " <foreignObject> tag."  }` 
+        // /*
+        // 'It\'s a HTML Fragment with a unifying root element containing just one <svg> tag without a <foreignObject> tag. without a <svg> tag without  a <foreignObject> tag.'
+        // 'It\'s a SVG Fragment with a unifying root element containing just one <svg> tag without a <foreignObject> tag. without a <svg> tag without  a <foreignObject> tag.'
+        // */
+        // // add type info text
+        // this.info = "It's a"
+        // + `${  !isSvg ?                                                             " HTML Fragment"                    :   " SVG Fragment"  }`
+        // + `${  this.fragment.childElementCount > 1 ?                                " without a unifying root element"  :   " with a unifying root element"  }`
+
+        // + `${  isSvg && hasMultipleSvgs ?                                           " containing multiple <svg> tags"   :   " containing just one <svg> tag"  }`
+        // + `${  isSvg && hasForeignObject ?                                          " with"                             :   " without"  }`
+        // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " multiple"                         :   " a"  }`
+        // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " <foreignObject> tags."            :   " <foreignObject> tag."  }`
+
+        // + `${  !isSvg && hasSvg ?                                                   " containing"                       :   " without"  }` 
+        // + `${  !isSvg && hasSvg && !hasMultipleSvgs ?                               " multiple <svg> tags"              :   " a <svg> tag"  }` 
+        // + `${  !isSvg && hasSvg && hasForeignObject ?                               " with"                             :   " without"  } `
+        // + `${  !isSvg && hasSvg && hasForeignObject && hasMultipleForeignObjects ?  " multiple"                         :   " a"  }` 
+        // + `${  !isSvg && hasSvg && hasForeignObject && hasMultipleForeignObjects ?  " <foreignObject> tags."            :   " <foreignObject> tag."  }` 
 
         // add element references from 'data-tref' and 'id' attributes
         this.refs = {}
