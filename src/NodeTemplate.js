@@ -2,6 +2,7 @@ import iterate from "./helpers/iterate.js"
 
 
 const DEFAULT_OPTIONS = {}
+let rootNode = undefined
 
 // @thesis: 
 // jsdom's or xmldom's window.document does not support the createContextualFragment() method
@@ -160,17 +161,11 @@ export default class NodeTemplate {
         // add root reference
         if(this.fragment.childElementCount === 1){
             this.root = this.fragment.firstChild
+        } 
+        // if multiple roots exist return them as array
+        else if(this.fragment.childElementCount > 1){
+            this.root = this.fragment.childNodes
         }
-    }
-    get root(){
-        if(this._root === undefined){
-            throw new Error("the fragment has no unifying root element, take a look at the info text.")
-        } else {
-            return this._root
-        }
-    }
-    set root(node: Node){
-        this._root = node
     }
     /**
      * The method returns a 'Node' of the 'NodeTemplate.'
@@ -238,6 +233,8 @@ export default class NodeTemplate {
         }
     }
 }
+
+
 
 function cleanInputString(html: String) {
     

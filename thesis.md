@@ -27,3 +27,11 @@ if(window !== undefined && window.document === undefined){
 } else {
     createDocumentFragment = window.document.createRange().createContextualFragment
 }
+
+
+
+// @thesis: recursion here!
+    set root(node: Node){
+        this.root = node
+        rootNode = node
+    }
