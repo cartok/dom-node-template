@@ -2,7 +2,7 @@ import iterate from "./helpers/iterate.js"
 
 
 const DEFAULT_OPTIONS = {}
-let rootNode = undefined
+// let rootNode = undefined
 
 // @thesis: 
 // jsdom's or xmldom's window.document does not support the createContextualFragment() method
@@ -103,21 +103,21 @@ export default class NodeTemplate {
         if(isSvg === true && hasMultipleSvgs === false){
             // if "image/svg+xml" for first element: replace existing xmlns attribute or add it. 
             // same pattern like before, but for any starting tag and not global.
-            this.text = this.text.replace(/(<[a-zA-Z]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/, `$1 xmlns="http://www.w3c.org/2000/svg"$2$5`)
+            this.text = this.text.replace(/(<[a-zA-Z]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/, `$1 xmlns="http://www.w3.org/2000/svg"$2$5`)
         }
 
         // if one or more svgs exist
         // - for all <svg>: replace existing xmlns attribute or add it. 
         // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
         if(hasSvg === true || hasMultipleSvgs === true){
-            this.text = this.text.replace(/(<svg)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/2000/svg"$2$5`)
+            this.text = this.text.replace(/(<svg)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3.org/2000/svg"$2$5`)
         }
 
         // if <foreignObject>s exist 
         // - for all <foreignObject>.firstChild: replace existing xmlns attribute or add it. 
         // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
         if(hasForeignObject === true){
-            this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/1999/xhtml"$2$5`)
+            this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3.org/1999/xhtml"$2$5`)
         }
 
         // parse
