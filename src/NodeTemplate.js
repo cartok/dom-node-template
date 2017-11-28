@@ -12,7 +12,7 @@ if( (window === undefined) || (window !== undefined && window.DOMParser === unde
     throw new Error("DOMParser constructor is not defined. If you do TDD or BDD and the code is not executed in a Browser you need a browser replacement.")
 }
 const createDocumentFragment = (window !== undefined && window.document !== undefined && window.document.createRange !== undefined)
-    ? window.document.createRange().createContextualFragment
+    ? (tagText) => window.document.createRange().createContextualFragment(tagText)
     : (tagText: String) => {
         const parser = new window.DOMParser()
         const __document__ = parser.parseFromString(tagText, "text/html")
