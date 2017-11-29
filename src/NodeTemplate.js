@@ -1,11 +1,10 @@
 import iterate from "./helpers/iterate.js"
 import XRegExp from "xregexp"
 
-const DOMParser = new window.DOMParser()
-const DEFAULT_OPTIONS = {
-    type: "text/html",      // "image/svg+xml"
-    nodeOnly: false,
-}
+
+const DEFAULT_OPTIONS = {}
+
+const parser = new window.DOMParser()
 const createDocumentFragment = (window !== undefined && window.document !== undefined && window.document.createRange !== undefined)
     ? (tagText) => window.document.createRange().createContextualFragment(tagText)
     : (tagText: String) => {
@@ -15,20 +14,16 @@ const createDocumentFragment = (window !== undefined && window.document !== unde
         Array.from(__document__.body.childNodes).forEach(n => fragment.appendChild(n))
         return fragment
 }
-const DEFAULT_OPTIONS = {}
-const parser = new window.DOMParser()
-
 
 
 export default class NodeTemplate {
     /**
      * 
-     * @param {String} text  
-     * @param {String} type is a MIME type (text/html, image/svg+xml, text/xml)
-     * @param {any} options 
+     * @param {String} text lost info by merging...
+     * @param {any} options lost info by merging...
      */
     constructor(tagText: String, options: Object) {
-        if(typeof text !== "string"){
+        if(typeof tagText !== "string"){
             throw new Error("you need to provide a xml string as first parameter.")
         }
 
@@ -169,16 +164,17 @@ export default class NodeTemplate {
                     ph += 1 // starts with zero
                     return `<div id="${placeHolderIdText}${ph}"></div>${match}`
                 })
-                // console.log(textWithPlaceholders)
                 const textWithoutSvgTagGroups = textWithPlaceholders.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, ``)
-                // console.log(textWithoutSvgTagGroups)
                 const doc = parser.parseFromString(textWithoutSvgTagGroups, "text/html")
                 const svgTagGroups = this.text.match(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g)
                 if(svgTagGroups === null || svgTagGroups.length < 1){
                     throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
                 }
+                this.fragment = window.document.createDocumentFragment()
+                Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n))
                 svgTagGroups.map(g => parser.parseFromString(g, "image/svg+xml")).forEach((d, ph) => {
-                    const placeHolderNode = doc.getElementById(`${placeHolderIdText}${ph}`)
+                    // QUERY SELECTOR ON FRAGMENT VS GETELEMENTBYID ON DOCUMENT?!
+                    const placeHolderNode = this.fragment.querySelector(`#${placeHolderIdText}${ph}`)
                     placeHolderNode
                         .parentNode
                         .insertBefore(d.documentElement, placeHolderNode)
@@ -186,12 +182,6 @@ export default class NodeTemplate {
                         .parentNode
                         .removeChild(placeHolderNode)
                 })
-                this.fragment = window.document.createDocumentFragment()
-                // doc.body.childNodes.forEach(n => console.log(n.outerHTML))
-                Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n))
-                // this.fragment.childNodes.forEach(n => console.log(n.outerHTML))
-                // console.dir(this.fragment)
-                // console.dir(this.fragment.childNodes)
             } 
             // if it's just html
             // no need to separate the tag-groups if its "text/html".
@@ -227,31 +217,37 @@ export default class NodeTemplate {
             // add element references from 'data-tref' and 'id' attributes
             this.refs = {}
             this.ids = {}
-            iterate(this.fragment.firstChild, (n) => {
-                // add node data references
-                let ref = undefined
-                if(options.type === "image/svg+xml"){
-                    ref = n.getAttribute("data-ref")
-                    if(ref !== null){
-                        this.refs[ref] = n
+            Array.from(this.fragment.childNodes).forEach(tagGroup => {
+                iterate(tagGroup, n => {
+                    // add node data references
+                    // if(n.dataset === undefined){
+                    //     console.log(n)
+                    //     console.log(n.outerHTML)
+                    // }
+                    let ref = undefined
+                    if(n.dataset === undefined){
+                        ref = n.getAttribute("data-ref")
+                        if(ref !== null){
+                            this.refs[ref] = n
+                        }
+                    } else {
+                        ref = n.dataset.ref
+                        if(ref !== undefined){
+                            this.refs[ref] = n
+                        }
                     }
-                } else {
-                    ref = n.dataset.ref
-                    if (ref !== undefined ) {
-                        this.refs[ref] = n
-                    }
-                }
 
-                // add node id references
-                if (n.id !== "") {
-                    this.ids[n.id] = n
-                }
+                    // add node id references
+                    if (n.id !== "") {
+                        this.ids[n.id] = n
+                    }
+                })
             })
 
             // add root reference
             this.root = (this.fragment.childNodes.length === 1)
                 ? this.fragment.firstElementChild
-                : this.fragment.childNodes
+                : Array.from(this.fragment.childNodes)
         })()
     }
     /**
