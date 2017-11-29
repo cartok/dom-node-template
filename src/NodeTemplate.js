@@ -1,73 +1,25 @@
-/**
- * @todo: add methods for appending and removing nodes
- * ==============> (getNode, addNode, removeNode)
- * @thesis:
- * - does the 'DOMParser' find out latest SVG namespace on its own?
- * - is there a need to create SVG nodes by namespace? 
- * 
- * @DOMParser: this needs a headless browser for testing.
- * 
- * @todo: filter the html comments out of the text. 
- */
-
-/**
- * @feature: automated xml type distinction
- * use-case: html text including svg
- * requirements: if no type parameter was passed in constructor
- *
- * example:
- * html = `
- * <div id="html-0">
- *      <h1>text</h1>
- *      <h2>text</h2>
- *      <svg id="svg-1">
- *          <g><rect></rect></g>
- *          <g>
- *              <foreignObject>
- *                  <div id="foreignObject"></div>
- *              </foreignObject>
- *          </g>
- *      </svg>
- *      <div>
- *          <svg id="svg-2"></svg>
- *      </div>
- * </div>`
- * 
- * separation algorithm ideas:
- * - before cleanInputString() divide the string into parts:
- * <div>
- *      <h1>text</h1>
- *          <!-- svg 1 was here -->
- *      <div>
- *          <svg></svg>
- *      </div>
- * </div>`
- * 
- * <svg>
- *      <g><rect></rect></g>
- *      <g>
- *          <foreignObject></foreignObject>
- *      </g>
- * </svg>
- * 
- *      <div>
- *           <svg></svg>
- *      </div>
- * 
- */
 import iterate from "./helpers/iterate.js"
-
+import XRegExp from "xregexp"
 
 const DOMParser = new window.DOMParser()
 const DEFAULT_OPTIONS = {
     type: "text/html",      // "image/svg+xml"
     nodeOnly: false,
 }
-const VALID_TYPES = [ "svg", "image/svg+xml", "html", "text/html" ]
+const createDocumentFragment = (window !== undefined && window.document !== undefined && window.document.createRange !== undefined)
+    ? (tagText) => window.document.createRange().createContextualFragment(tagText)
+    : (tagText: String) => {
+        const parser = new window.DOMParser()
+        const __document__ = parser.parseFromString(tagText, "text/html")
+        const fragment = window.document.createDocumentFragment()
+        Array.from(__document__.body.childNodes).forEach(n => fragment.appendChild(n))
+        return fragment
+}
+const DEFAULT_OPTIONS = {}
+const parser = new window.DOMParser()
 
-/**
- * About 'DOMStrings' for querys: https://developer.mozilla.org/en-US/docs/Web/API/DOMString
- */
+
+
 export default class NodeTemplate {
     /**
      * 
@@ -75,140 +27,236 @@ export default class NodeTemplate {
      * @param {String} type is a MIME type (text/html, image/svg+xml, text/xml)
      * @param {any} options 
      */
-    constructor(text: String, options: Object) {
+    constructor(tagText: String, options: Object) {
         if(typeof text !== "string"){
             throw new Error("you need to provide a xml string as first parameter.")
         }
-        if(options !== undefined && options.type !== undefined){
-            if(VALID_TYPES.find(options.type) === undefined){
-                if(options.type === "xml" || options.type === "application/xml"){
-                    throw new Error(`invalid type option. xml is not supported. use one of: ${VALID_TYPES.join(",")}.`)
-                } else {
-                    throw new Error(`invalid type option. use one of: ${VALID_TYPES.join(",")}.`)
-                }
-            }
+
+        // @feature: remove comments
+        // clean the input string and transform it to a clean one-line string
+        this.text = cleanInputString(tagText)
+
+        // get node name of first tag
+        const nodeNameFirstTag = (() => {
+            let matches = this.text.match(/^<([a-zA-Z\d]+)[^>]*>/)
+            return (matches !== null) ? matches[1] : undefined
+        })()
+
+
+        // handle options
+        // ------------------------------------------------------------------------------------------
+        // - merge default options with options
+        // - destructure options
+        options = Object.assign(DEFAULT_OPTIONS, options)
+        let { 
+            isSvg,
+            hasSvg,
+            // hasMultipleSvgs, 
+            // hasForeignObject, 
+            // hasMultipleForeignObjects 
+        } = options
+
+        // @improvement/accuracy: add distinction algorithm using npm packages "svg-tag-names" etc.
+        // if options.isSvg is not given and options.hasSvg is true:
+        // - find out if the 'tagText' it is SVG anyways.
+        // - assumption: the 'tagText' is SVG if the 'nodeName' of the first tag is "svg".
+        if(isSvg === undefined){
+            isSvg = (nodeNameFirstTag === "svg") ? true : false
         }
 
-        // clean the input string and transform it to a one-line string
-        this.text = cleanInputString(text)
-
-        // @todo: prevent / detect if user has more than a single root node. 
-        // check if start- and closing-tag match
-        let matches = this.text.match(/^<([a-zA-Z\d]*)[^>]*>.*<\/([a-zA-Z\d]*)[^>]*>$/)
-        if(matches === null){
-            throw new Error("your start and closing tags seem to be invalid.")
-        } else {
-            // remove the first match (it is the whole string)
-            matches = matches.filter((match, i) => i > 0)
+        // check if text has <svg>
+        // assumption: if the first tag is not <svg> but multiple svgs
+        if(hasSvg === undefined){
+            let testOk = /<svg[^>]*>/.test(this.text)
+            hasSvg = (nodeNameFirstTag !== "svg") && testOk
         }
-        const firstTag = matches[0]
-        const lastTag = matches[1]
-        const tagsMatch = (firstTag === lastTag)
-        // console.warn("this might fail if <div></div><h1></h1>")
+        // ------------------------------------------------------------------------------------------
 
-        if(!tagsMatch){
-            throw new Error("the start and close tag of your xml text do not match, or you have no root element.")
-        }
 
-        // if no mime type parameter is given find out the mime type
-        if(options === undefined || options !== undefined && options.type === undefined){
-            // automated svg or html distinction
-            // assumption: if the html does not start and end with "<svg>" it is html 
-            console.warn("automated html and svg distinction only works if your svg starts with the <svg>-tag.")
-            const generatedType = (firstTag === "svg") ? "image/svg+xml" : "text/html"
-            const noOptionParameter = (options === undefined)
-            if(noOptionParameter){
-                options = {}   
-            }
-            options.type = generatedType
-            // console.log("overridden type:", generatedType)
-        }
+        // add additional information (must happen after options handling)
+        // ------------------------------------------------------------------------------------------
+        // check if multiple <svg> exist
+        const hasMultipleSvgs = (() => {
+            let matches = this.text.match(/<svg[^>]*>/g)
+            return (matches !== null) ? (matches.length > 1) : false
+        })()
 
-        // merge default options with options
-        options = Object.assign({}, DEFAULT_OPTIONS, options)
-
-        // allow 'easy' type specification
-        options.type = (options.type === "svg") ? "image/svg+xml" : options.type
-        options.type = (options.type === "html") ? "text/html" : options.type
-
-        // add type info
-        this.type = options.type
-
-        // for all <svg>: replace existing xmlns attribute or add it. 
-        // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?
-        // match xmlns attribute: (\sxmlns=["'][^\s]+["'])
-        // match to end of tag: ([^>]*>)
-        // > the resulting pattern will remove old xmlns attribute 
-        // > and add a new xmlns attribute directly after the tag name
-        this.text = this.text.replace(/(<svg)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/2000/svg"$2$5`)
-
-        // if "image/svg+xml" for first element: replace existing xmlns attribute or add it. 
-        // same pattern like before, but for any starting tag and not global.
-        if(options.type === "image/svg+xml"){
-            this.text = this.text.replace(/(<[a-zA-Z]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/, `$1 xmlns="http://www.w3c.org/2000/svg"$2$5`)
-        }
-
-        // for all <foreignObject>.firstChild: replace existing xmlns attribute or add it. 
-        // match <foreignObject anything><firstChildTag: (<foreignObject[^>]*><[a-zA-Z\d]+)
-        // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?
-        // match xmlns attribute: (\sxmlns=["'][^\s]+["'])
-        // match to end of tag: ([^>]*>)
-        this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3c.org/1999/xhtml"$2$5`)
-
-        // parse
-        const doc = DOMParser.parseFromString(this.text, options.type)
-
-        // add fragment
-        switch(options.type){
-            case "text/html":
-                // the 'DOMParser' returns a whole document. 
-                // create a new lightweight 'DocumentFragment', 
-                // and add all body.childNodes to it.
-                this.fragment = window.document.createDocumentFragment()
-                // @research, @dagre: why do i use clone node here?
-                Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
-                break
-            case "image/svg+xml":
-                // @research: can i append a svg fragment to a svg or do i need documentElement anyways?
-                // the 'DOMParser' returns a SVGDocumentFragment. 
-                this.svgFragment = doc
-                this.fragment = window.document.createDocumentFragment()
-                Array.from(this.svgFragment.childNodes).forEach(n => this.fragment.appendChild(n.cloneNode(true)))
-                break
-        }
-
-        // add element references from 'data-tref' and 'id' attributes
-        this.refs = {}
-        this.ids = {}
-        iterate(this.fragment.firstChild, (n) => {
-            // add node data references
-            let ref = undefined
-            if(options.type === "image/svg+xml"){
-                ref = n.getAttribute("data-ref")
-                if(ref !== null){
-                    this.refs[ref] = n
-                }
+        // if <svg> tag(s) exists 
+        // - find out if a <foreignObject> tag exist
+        const hasForeignObject = (() => {
+            if(isSvg || hasSvg || hasMultipleSvgs){
+                return /<foreignObject[^>]*>/.test(this.text)
             } else {
-                ref = n.dataset.ref
-                if (ref !== undefined ) {
-                    this.refs[ref] = n
+                return false
+            }
+        })()
+
+        // if <foreignObject> tag exists 
+        // - find out if multiple <foreignObject> tags exist
+        const hasMultipleForeignObjects = (() => {
+            if(hasForeignObject === true){
+                let matches = this.text.match(/<foreignObject[^>]*>/g)
+                return (matches !== null) ? (matches.length > 1) : false
+            } else {
+                return false
+            }
+        })()
+        // ------------------------------------------------------------------------------------------
+
+        const addNamespaces = (() => {
+            // namespace handling
+            // ------------------------------------------------------------------------------------------
+            // regex patterns:
+            // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?
+            // match xmlns attribute: (\sxmlns=["'][^\s]+["'])
+            // match to end of tag: ([^>]*>)
+            if(isSvg === true && hasMultipleSvgs === false){
+                // if "image/svg+xml" for first element: replace existing xmlns attribute or add it. 
+                // same pattern like before, but for any starting tag and not global.
+                this.text = this.text.replace(/(<[a-zA-Z]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/, `$1 xmlns="http://www.w3.org/2000/svg"$2$5`)
+            }
+
+            // if one or more svgs exist
+            // - for all <svg>: replace existing xmlns attribute or add it. 
+            // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
+            if(hasSvg === true || hasMultipleSvgs === true){
+                this.text = this.text.replace(/(<svg)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3.org/2000/svg"$2$5`)
+            }
+
+            // if <foreignObject>s exist 
+            // - for all <foreignObject>.firstChild: replace existing xmlns attribute or add it. 
+            // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
+            if(hasForeignObject === true){
+                this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3.org/1999/xhtml"$2$5`)
+            }
+            // ------------------------------------------------------------------------------------------
+        })()
+
+        const parse = (() => {
+            // parsing
+            // ------------------------------------------------------------------------------------------
+            this.fragment = undefined
+            // if it's svg
+            // - check if multiple tag-groups
+            // - create a SVGDocument for each tag-group
+            // - append its documentElement to a new DocumentFragment
+            if(isSvg){
+                const tagGroups = this.text.match(/<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)(<\/\1>)+/g)
+                if(tagGroups !== null && tagGroups.length >= 1){
+                    // the code below works for 1 or multiple tag-groups.
+                    this.fragment = window.document.createDocumentFragment()
+                    tagGroups.map(g => parser.parseFromString(g, "image/svg+xml"))
+                        .forEach(d => this.fragment.appendChild(d.documentElement))
+                } else {
+                    throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
                 }
+            } 
+            // if its html with svg
+            // * for every 'new' svg:
+            //   - add placeholder <div id="svg-X"></div> tag before the svg
+            //   - and cut out the whole svg to array (the text will have placeholders with ids instead of svgs)
+            // * parse the text as "text/html"
+            // * add all document.body.childNodes to 'this.fragment'
+            // * for every svgText in the array:
+            //   - parse a svg as "image/svg+xml" to another array
+            // * for every svgDocument in the array:
+            //    - use its array-index to find the placeholder byId
+            //    - get the placeholder parent, remove placeholder, append the svg
+            else if(hasSvg) {
+                var ph = -1
+                const placeHolderIdText = "nodetemplate-svg-placeholder-"
+                const textWithPlaceholders = this.text.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, match =>{
+                    ph += 1 // starts with zero
+                    return `<div id="${placeHolderIdText}${ph}"></div>${match}`
+                })
+                // console.log(textWithPlaceholders)
+                const textWithoutSvgTagGroups = textWithPlaceholders.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, ``)
+                // console.log(textWithoutSvgTagGroups)
+                const doc = parser.parseFromString(textWithoutSvgTagGroups, "text/html")
+                const svgTagGroups = this.text.match(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g)
+                if(svgTagGroups === null || svgTagGroups.length < 1){
+                    throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
+                }
+                svgTagGroups.map(g => parser.parseFromString(g, "image/svg+xml")).forEach((d, ph) => {
+                    const placeHolderNode = doc.getElementById(`${placeHolderIdText}${ph}`)
+                    placeHolderNode
+                        .parentNode
+                        .insertBefore(d.documentElement, placeHolderNode)
+                    placeHolderNode
+                        .parentNode
+                        .removeChild(placeHolderNode)
+                })
+                this.fragment = window.document.createDocumentFragment()
+                // doc.body.childNodes.forEach(n => console.log(n.outerHTML))
+                Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n))
+                // this.fragment.childNodes.forEach(n => console.log(n.outerHTML))
+                // console.dir(this.fragment)
+                // console.dir(this.fragment.childNodes)
+            } 
+            // if it's just html
+            // no need to separate the tag-groups if its "text/html".
+            else {
+                this.fragment = createDocumentFragment(this.text)
             }
+            // ------------------------------------------------------------------------------------------
+        })()
 
-            // add node id references
-            if (n.id !== "") {
-                this.ids[n.id] = n
-            }
-        })
+        const createInfoText = (() => {
+            // /*
+            // 'It\'s a HTML Fragment with a unifying root element containing just one <svg> tag without a <foreignObject> tag. without a <svg> tag without  a <foreignObject> tag.'
+            // 'It\'s a SVG Fragment with a unifying root element containing just one <svg> tag without a <foreignObject> tag. without a <svg> tag without  a <foreignObject> tag.'
+            // */
+            // // add type info text
+            // this.info = "It's a"
+            // + `${  !isSvg ?                                                             " HTML Fragment"                    :   " SVG Fragment"  }`
+            // + `${  this.fragment.childElementCount > 1 ?                                " without a unifying root element"  :   " with a unifying root element"  }`
 
-        // add root reference
-        // if(options.type === "image/svg+xml"){
-        //     this.root = this.fragment // @warning: its no document fragment
-        // } else {
-            this.root = this.fragment.firstChild
-        // }
+            // + `${  isSvg && hasMultipleSvgs ?                                           " containing multiple <svg> tags"   :   " containing just one <svg> tag"  }`
+            // + `${  isSvg && hasForeignObject ?                                          " with"                             :   " without"  }`
+            // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " multiple"                         :   " a"  }`
+            // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " <foreignObject> tags."            :   " <foreignObject> tag."  }`
 
+            // + `${  !isSvg && hasSvg ?                                                   " containing"                       :   " without"  }` 
+            // + `${  !isSvg && hasSvg && !hasMultipleSvgs ?                               " multiple <svg> tags"              :   " a <svg> tag"  }` 
+            // + `${  !isSvg && hasSvg && hasForeignObject ?                               " with"                             :   " without"  } `
+            // + `${  !isSvg && hasSvg && hasForeignObject && hasMultipleForeignObjects ?  " multiple"                         :   " a"  }` 
+            // + `${  !isSvg && hasSvg && hasForeignObject && hasMultipleForeignObjects ?  " <foreignObject> tags."            :   " <foreignObject> tag."  }` 
+        })()
+
+        const createReferences = (() => {
+            // add element references from 'data-tref' and 'id' attributes
+            this.refs = {}
+            this.ids = {}
+            iterate(this.fragment.firstChild, (n) => {
+                // add node data references
+                let ref = undefined
+                if(options.type === "image/svg+xml"){
+                    ref = n.getAttribute("data-ref")
+                    if(ref !== null){
+                        this.refs[ref] = n
+                    }
+                } else {
+                    ref = n.dataset.ref
+                    if (ref !== undefined ) {
+                        this.refs[ref] = n
+                    }
+                }
+
+                // add node id references
+                if (n.id !== "") {
+                    this.ids[n.id] = n
+                }
+            })
+
+            // add root reference
+            this.root = (this.fragment.childNodes.length === 1)
+                ? this.fragment.firstElementChild
+                : this.fragment.childNodes
+        })()
     }
+    /**
+     * About 'DOMStrings' for querys: https://developer.mozilla.org/en-US/docs/Web/API/DOMString
+     */
     /**
      * The method returns a 'Node' of the 'NodeTemplate.'
      * @param {String} query: Can be .class, #id or 'DOMString'. 
