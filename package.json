@@ -1,6 +1,6 @@
 {
   "name": "dom-node-template-es6",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "create usefull html node wrapper object with es6 template string.",
   "keywords": [
     "dom",
