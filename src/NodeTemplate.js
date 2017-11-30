@@ -42,17 +42,21 @@ export default class NodeTemplate {
 
         // get all tag-groups
         const tagGroups = this.text.match(/<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)(<\/\1>)+/g)
-        console.log(tagGroups)
+        // console.log(tagGroups)
         const hasMultipleTagGroups = (tagGroups.length > 1)
-        console.log(hasMultipleTagGroups)
+        // console.log(hasMultipleTagGroups)
         const hasSingleTagGroup = (tagGroups.length === 1)
 
         // handle options
         // ------------------------------------------------------------------------------------------
         // - merge default options with options
         // - destructure options
-        options = Object.assign(DEFAULT_OPTIONS, options)
+        console.log("before destructuring:", options)
+        // console.log("before destructuring:", options.isSvg)
+        options = Object.assign({}, DEFAULT_OPTIONS, options)
         let { isSvg, htmlWithSvg } = options
+        console.log("destructured, isSvg:", isSvg)
+        console.log("destructured, htmlWithSvg:", htmlWithSvg)
         let svgDetected = false
 
         // @improvement/accuracy: add distinction algorithm using npm packages "svg-tag-names" etc.
@@ -61,7 +65,7 @@ export default class NodeTemplate {
         // @outdated: - assumption: the 'tagText' is SVG if the 'nodeName' of the first tag is "svg".
         if(isSvg === undefined){
             if(hasMultipleTagGroups){
-                const allTagGroupsAreSvg = tagGroups.every(tg => /^<svg[^>]*>/.test(tg) === true)
+                const allTagGroupsAreSvg = tagGroups.every(tg => /^<svg/.test(tg) === true)
                 if(allTagGroupsAreSvg){
                     isSvg = true
                     svgDetected = true
@@ -79,12 +83,17 @@ export default class NodeTemplate {
                 }
             }
         }
+        console.log("isSvg:", isSvg)
+        console.log("nodeNameFirstTag:", nodeNameFirstTag)
+        console.log("hasMultipleTagGroups:", hasMultipleTagGroups)
+        console.log("hasSingleTagGroup:", hasSingleTagGroup)
+        console.log("svgDetected:", svgDetected)
 
         // check if text has <svg>
         // > depends on 'isSvg'
         if(htmlWithSvg === undefined){
             if(!isSvg){
-                htmlWithSvg = /<svg[^>]*>/.test(this.text)
+                htmlWithSvg = /<svg/.test(this.text)
             } else {
                 htmlWithSvg = false
             }
@@ -96,7 +105,7 @@ export default class NodeTemplate {
         // ------------------------------------------------------------------------------------------
         // check if a <svg> exist
         const hasSvg = (() => {
-            return /<svg[^>]*>/.test(this.text)
+            return /<svg/.test(this.text)
         })()
 
         // check if multiple <svg> exist
@@ -114,7 +123,7 @@ export default class NodeTemplate {
         // @todo: only if?
         const hasForeignObject = (() => {
             if(hasSvg || hasMultipleSvgs){
-                return /<foreignObject[^>]*>/.test(this.text)
+                return /<foreignObject/.test(this.text)
             } else {
                 return false
             }
@@ -148,8 +157,10 @@ export default class NodeTemplate {
                     const tagGroupsXmlnsAdded = tagGroupsXmlnsRemoved.map(tg => tg.replace(/^(<[a-zA-Z]+)/, `$1 xmlns="${XMLNS_SVG}"`))
                     this.text = tagGroupsXmlnsAdded
                 } else {
+                    console.log(this.text)
                     this.text = this.text.replace(/^(<[a-zA-Z]+(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/, `$1`)
                     this.text = this.text.replace(/^(<([a-zA-Z]+))\b((?:[^>]*>.*?)(<\/\2>)+)/, `$1 xmlns="${XMLNS_SVG}"$3`)
+                    console.log(this.text)
                 }
             }
             if(!isSvg && hasSvg){
