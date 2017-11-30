@@ -14,7 +14,7 @@ const multipleSvgs = new NodeTemplate(`
     <svg id="2" xmlns="http://www.w3.org/2000/svg"></svg>
     <svg id="3" xmlns="http://www.w3.org/2000/svg"><g><rect data-ref="hodor"></rect></g></svg>
 `)
-console.log(multipleSvgs)
+// console.log(multipleSvgs)
 
 const htmlWithSvgs = new NodeTemplate(`
     <div id="papelapapapa">
@@ -28,11 +28,22 @@ const htmlWithSvgs = new NodeTemplate(`
     </div>
     <svg id="standalone"></svg>
 `)
-console.log(htmlWithSvgs)
+// console.log(htmlWithSvgs)
 
 const justHtml = new NodeTemplate(`
     <div><h1 data-ref="hodor"></h1></div>
     <div><h1></h1></div>
     <div></div>
 `)
-console.log(justHtml)
+// console.log(justHtml)
+
+
+const oneSvgGroup = new NodeTemplate(`
+    <g>hi world</g>
+`, { isSvg: true })
+console.log(oneSvgGroup)
+const twoSvgGroups = new NodeTemplate(`
+    <g>hi world</g>
+    <g>hi world</g>
+`, { isSvg: true })
+console.log(twoSvgGroups)

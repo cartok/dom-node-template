@@ -4,6 +4,9 @@ import XRegExp from "xregexp"
 
 const DEFAULT_OPTIONS = {}
 
+const XMLNS_SVG = "http://www.w3.org/2000/svg"
+const XMLNS_FO = "http://www.w3.org/1999/xhtml"
+
 const parser = new window.DOMParser()
 const createDocumentFragment = (window !== undefined && window.document !== undefined && window.document.createRange !== undefined)
     ? (tagText) => window.document.createRange().createContextualFragment(tagText)
@@ -37,49 +40,78 @@ export default class NodeTemplate {
             return (matches !== null) ? matches[1] : undefined
         })()
 
+        // get all tag-groups
+        const tagGroups = this.text.match(/<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)(<\/\1>)+/g)
+        const hasMultipleTagGroups = (tagGroups.length > 1)
+        const hasSingleTagGroup = (tagGroups.length === 1)
 
         // handle options
         // ------------------------------------------------------------------------------------------
         // - merge default options with options
         // - destructure options
         options = Object.assign(DEFAULT_OPTIONS, options)
-        let { 
-            isSvg,
-            hasSvg,
-            // hasMultipleSvgs, 
-            // hasForeignObject, 
-            // hasMultipleForeignObjects 
-        } = options
+        let { isSvg, htmlWithSvg } = options
+        let svgDetected = false
 
         // @improvement/accuracy: add distinction algorithm using npm packages "svg-tag-names" etc.
-        // if options.isSvg is not given and options.hasSvg is true:
-        // - find out if the 'tagText' it is SVG anyways.
-        // - assumption: the 'tagText' is SVG if the 'nodeName' of the first tag is "svg".
+        // @outdated: if options.isSvg is not given and options.htmlWithSvg is true:
+        // @outdated: - find out if the 'tagText' it is SVG anyways.
+        // @outdated: - assumption: the 'tagText' is SVG if the 'nodeName' of the first tag is "svg".
         if(isSvg === undefined){
-            isSvg = (nodeNameFirstTag === "svg") ? true : false
+            if(hasMultipleTagGroups){
+                const allTagGroupsAreSvg = tagGroups.every(tg => /^<svg[^>]*>/.test(tg) === true)
+                if(allTagGroupsAreSvg){
+                    isSvg = true
+                    svgDetected = true
+                } else {
+                    console.warn("the text has more than one tag-group, not all are starting with a svg-tag. the text will be parsed as html with svg if it contains any svg-tag (literally '<svg>' can't detect more by now).")
+                    isSvg = false
+                }
+            }
+            else if(hasSingleTagGroup) {
+                if(nodeNameFirstTag === "svg"){
+                    isSvg = true
+                    svgDetected = true
+                } else {
+                    isSvg = false
+                }
+            }
         }
 
         // check if text has <svg>
-        // assumption: if the first tag is not <svg> but multiple svgs
-        if(hasSvg === undefined){
-            let testOk = /<svg[^>]*>/.test(this.text)
-            hasSvg = (nodeNameFirstTag !== "svg") && testOk
+        // > depends on 'isSvg'
+        if(htmlWithSvg === undefined){
+            if(!isSvg){
+                htmlWithSvg = /<svg[^>]*>/.test(this.text)
+            } else {
+                htmlWithSvg = false
+            }
         }
         // ------------------------------------------------------------------------------------------
 
 
-        // add additional information (must happen after options handling)
+        // add additional !independend! attributes
         // ------------------------------------------------------------------------------------------
+        // check if a <svg> exist
+        const hasSvg = (() => {
+            return /<svg[^>]*>/.test(this.text)
+        })()
+
         // check if multiple <svg> exist
         const hasMultipleSvgs = (() => {
-            let matches = this.text.match(/<svg[^>]*>/g)
-            return (matches !== null) ? (matches.length > 1) : false
+            if(hasSvg){
+                let matches = this.text.match(/<svg[^>]*>/g)
+                return (matches !== null) ? (matches.length > 1) : false
+            } else {
+                return false
+            }
         })()
 
         // if <svg> tag(s) exists 
         // - find out if a <foreignObject> tag exist
+        // @todo: only if?
         const hasForeignObject = (() => {
-            if(isSvg || hasSvg || hasMultipleSvgs){
+            if(hasSvg || hasMultipleSvgs){
                 return /<foreignObject[^>]*>/.test(this.text)
             } else {
                 return false
@@ -89,7 +121,7 @@ export default class NodeTemplate {
         // if <foreignObject> tag exists 
         // - find out if multiple <foreignObject> tags exist
         const hasMultipleForeignObjects = (() => {
-            if(hasForeignObject === true){
+            if(hasForeignObject){
                 let matches = this.text.match(/<foreignObject[^>]*>/g)
                 return (matches !== null) ? (matches.length > 1) : false
             } else {
@@ -100,29 +132,44 @@ export default class NodeTemplate {
 
         const addNamespaces = (() => {
             // namespace handling
-            // ------------------------------------------------------------------------------------------
-            // regex patterns:
-            // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?
-            // match xmlns attribute: (\sxmlns=["'][^\s]+["'])
+            // force override specific xmlns attribute if it allready exists for 
+            // 1. remove all xmlns attributes from 'svg' or 'foreignObject' or 'parent tag-group nodes'
+            // 2. add xmlns attributes to 'svg' and 'foreignObject' and 'parent tag-group nodes'
+            // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^"']*["'])*)?
+            // match xmlns attribute: (\sxmlns=["'][^"']*["'])
             // match to end of tag: ([^>]*>)
-            if(isSvg === true && hasMultipleSvgs === false){
-                // if "image/svg+xml" for first element: replace existing xmlns attribute or add it. 
-                // same pattern like before, but for any starting tag and not global.
-                this.text = this.text.replace(/(<[a-zA-Z]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/, `$1 xmlns="http://www.w3.org/2000/svg"$2$5`)
+            // ------------------------------------------------------------------------------------------
+            if(isSvg){
+                if(hasMultipleTagGroups){
+                    // only delete the xmlns attribute from the parent tag-group nodes
+                    const tagGroupsXmlnsRemoved = tagGroups.map(tg => tg.replace(/^(<[a-zA-Z]+[^>]*)(?:\sxmlns=["'][^"']*["'])/, `$1`))
+                    const tagGroupsXmlnsAdded = tagGroupsXmlnsRemoved.map(tg => tg.replace(/^(<[a-zA-Z]+)/, `$1 xmlns="${XMLNS_SVG}"`))
+                    this.text = tagGroupsXmlnsAdded
+                } else {
+                    this.text = this.text.replace(/^(<[a-zA-Z]+(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/, `$1`)
+                    this.text = this.text.replace(/^(<([a-zA-Z]+))\b((?:[^>]*>.*?)(<\/\2>)+)/, `$1 xmlns="${XMLNS_SVG}"$3`)
+                }
             }
-
-            // if one or more svgs exist
-            // - for all <svg>: replace existing xmlns attribute or add it. 
-            // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
-            if(hasSvg === true || hasMultipleSvgs === true){
-                this.text = this.text.replace(/(<svg)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3.org/2000/svg"$2$5`)
+            if(!isSvg && hasSvg){
+                if(hasMultipleSvgs){
+                    this.text = this.text.replace(/(<svg(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/g, `$1`)
+                    this.text = this.text.replace(/(<svg)\b((?:[^>]*>.*?)(<\/svg>)+)/g, `$1 xmlns="${XMLNS_SVG}"$2`)
+                } else {
+                    this.text = this.text.replace(/(<svg(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/, `$1`)
+                    this.text = this.text.replace(/(<svg)\b((?:[^>]*>.*?)(<\/svg>)+)/, `$1 xmlns="${XMLNS_SVG}"$2`)
+                }
             }
-
-            // if <foreignObject>s exist 
-            // - for all <foreignObject>.firstChild: replace existing xmlns attribute or add it. 
-            // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
-            if(hasForeignObject === true){
-                this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3.org/1999/xhtml"$2$5`)
+            if(hasForeignObject){
+                // (<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^"']*["'])*)?(\sxmlns=["'][^"']*["'])([^>]*>)
+                // `$1 xmlns="${XMLNS_FO}"$2$5`
+                if(hasMultipleForeignObjects){
+                    // this.text = this.text.replace(/(<svg(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/g, `$1`)
+                    // this.text = this.text.replace(/(<svg)\b((?:[^>]*>.*?)(<\/svg>)+)/g, `$1 xmlns="${XMLNS_FO}"$2`)
+                } else {
+                    // this.text = this.text.replace(/(<svg(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/, `$1`)
+                    // this.text = this.text.replace(/(<svg)\b((?:[^>]*>.*?)(<\/svg>)+)/, `$1 xmlns="${XMLNS_FO}"$2`)
+                }
+                console.warn("automated xmlns for <foreignObject> content is not yet supported. you need to provide the xmlns attributes on your own.")
             }
             // ------------------------------------------------------------------------------------------
         })()
@@ -136,7 +183,6 @@ export default class NodeTemplate {
             // - create a SVGDocument for each tag-group
             // - append its documentElement to a new DocumentFragment
             if(isSvg){
-                const tagGroups = this.text.match(/<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)(<\/\1>)+/g)
                 if(tagGroups !== null && tagGroups.length >= 1){
                     // the code below works for 1 or multiple tag-groups.
                     this.fragment = window.document.createDocumentFragment()
@@ -157,7 +203,7 @@ export default class NodeTemplate {
             // * for every svgDocument in the array:
             //    - use its array-index to find the placeholder byId
             //    - get the placeholder parent, remove placeholder, append the svg
-            else if(hasSvg) {
+            else if(htmlWithSvg) {
                 var ph = -1
                 const placeHolderIdText = "nodetemplate-svg-placeholder-"
                 const textWithPlaceholders = this.text.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, match =>{
@@ -206,11 +252,11 @@ export default class NodeTemplate {
             // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " multiple"                         :   " a"  }`
             // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " <foreignObject> tags."            :   " <foreignObject> tag."  }`
 
-            // + `${  !isSvg && hasSvg ?                                                   " containing"                       :   " without"  }` 
-            // + `${  !isSvg && hasSvg && !hasMultipleSvgs ?                               " multiple <svg> tags"              :   " a <svg> tag"  }` 
-            // + `${  !isSvg && hasSvg && hasForeignObject ?                               " with"                             :   " without"  } `
-            // + `${  !isSvg && hasSvg && hasForeignObject && hasMultipleForeignObjects ?  " multiple"                         :   " a"  }` 
-            // + `${  !isSvg && hasSvg && hasForeignObject && hasMultipleForeignObjects ?  " <foreignObject> tags."            :   " <foreignObject> tag."  }` 
+            // + `${  !isSvg && htmlWithSvg ?                                                   " containing"                       :   " without"  }` 
+            // + `${  !isSvg && htmlWithSvg && !hasMultipleSvgs ?                               " multiple <svg> tags"              :   " a <svg> tag"  }` 
+            // + `${  !isSvg && htmlWithSvg && hasForeignObject ?                               " with"                             :   " without"  } `
+            // + `${  !isSvg && htmlWithSvg && hasForeignObject && hasMultipleForeignObjects ?  " multiple"                         :   " a"  }` 
+            // + `${  !isSvg && htmlWithSvg && hasForeignObject && hasMultipleForeignObjects ?  " <foreignObject> tags."            :   " <foreignObject> tag."  }` 
         })()
 
         const createReferences = (() => {

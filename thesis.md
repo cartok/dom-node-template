@@ -101,3 +101,14 @@ if(window !== undefined && window.document === undefined){
         // alternative: <([a-zA-Z0-9]+)\b(?:[^>]*>.*?)(<\/\1>)+    <-- must be '+' not '*'
         // disadvantage: no validation if the number of opening and closing tags are equal! 
         
+
+
+
+var rofl = "_HODOR_"
+undefined
+var lol = "mein name ist _HODOR_!!!"
+undefined
+lol.match(/`ist ${rofl}`/)
+null
+lol.match(new RegExp(`ist ${rofl}`))
+Array [ "ist _HODOR_" ]
