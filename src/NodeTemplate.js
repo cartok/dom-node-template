@@ -185,7 +185,6 @@ export default class NodeTemplate {
             // - create a SVGDocument for each tag-group
             // - append its documentElement to a new DocumentFragment
             if(isSvg){
-                console.log("detected svg...")
                 if(tagGroups !== null && tagGroups.length >= 1){
                     // the code below works for 1 or multiple tag-groups.
                     this.fragment = window.document.createDocumentFragment()
@@ -268,11 +267,6 @@ export default class NodeTemplate {
             this.ids = {}
             Array.from(this.fragment.childNodes).forEach(tagGroup => {
                 iterate(tagGroup, n => {
-                    // add node data references
-                    // if(n.dataset === undefined){
-                    //     console.log(n)
-                    //     console.log(n.outerHTML)
-                    // }
                     let ref = undefined
                     if(n.dataset === undefined){
                         ref = n.getAttribute("data-ref")
@@ -381,7 +375,7 @@ function cleanInputString(html: String) {
     // remove all spaces > 2 
     // regex: \s{2,}
     // subst: null
-    html = html.replace(/\s{2,}/g, "")
+    html = html.replace(/\s{2,}/g, " ")
     
     // add space after every ; in style attributes
     // regex: ;([^\s])

@@ -51,7 +51,7 @@ const twoSvgGroups = new NodeTemplate(`
 */
 
 const forceSvg = new NodeTemplate(`
-    <g data-name="point" 
+    <g xmlns="JOJOJO" data-name="point" 
         transform="translate(0,0)">
         
         <circle data-ref="collisionNode"
