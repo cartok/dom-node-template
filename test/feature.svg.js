@@ -9,6 +9,7 @@ import $ from "jquery"
 // actual code imports
 import NodeTemplate from "../build/NodeTemplate.js"
 
+/*
 const multipleSvgs = new NodeTemplate(`
     <svg id="1" xmlns="http://www.w3.org/2000/svg"></svg>
     <svg id="2" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -41,9 +42,33 @@ const justHtml = new NodeTemplate(`
 const oneSvgGroup = new NodeTemplate(`
     <g>hi world</g>
 `, { isSvg: true })
-console.log(oneSvgGroup)
+// console.log(oneSvgGroup)
 const twoSvgGroups = new NodeTemplate(`
     <g>hi world</g>
     <g>hi world</g>
 `, { isSvg: true })
-console.log(twoSvgGroups)
+// console.log(twoSvgGroups)
+*/
+
+const forceSvg = new NodeTemplate(`
+    <g data-name="point" 
+        transform="translate(0,0)">
+        
+        <circle data-ref="collisionNode"
+            cx="3"
+            cy="3"
+            r="6"
+            fill="red">
+        </circle>
+
+        <circle data-ref="outlineNode"
+            class="drawable-collision-node drawable-disabled"
+            cx="5"
+            cy="5"
+            r="10"
+            fill="white">
+        </circle>
+
+    </g>
+`, { isSvg: true })
+console.log(forceSvg)

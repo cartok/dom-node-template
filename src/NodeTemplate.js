@@ -42,7 +42,9 @@ export default class NodeTemplate {
 
         // get all tag-groups
         const tagGroups = this.text.match(/<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)(<\/\1>)+/g)
+        console.log(tagGroups)
         const hasMultipleTagGroups = (tagGroups.length > 1)
+        console.log(hasMultipleTagGroups)
         const hasSingleTagGroup = (tagGroups.length === 1)
 
         // handle options
@@ -183,6 +185,7 @@ export default class NodeTemplate {
             // - create a SVGDocument for each tag-group
             // - append its documentElement to a new DocumentFragment
             if(isSvg){
+                console.log("detected svg...")
                 if(tagGroups !== null && tagGroups.length >= 1){
                     // the code below works for 1 or multiple tag-groups.
                     this.fragment = window.document.createDocumentFragment()
