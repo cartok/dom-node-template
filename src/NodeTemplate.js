@@ -1,7 +1,3 @@
-import iterate from "./helpers/iterate.js"
-// import XRegExp from "xregexp"
-
-
 const DEFAULT_OPTIONS = {}
 
 const XMLNS_SVG = "http://www.w3.org/2000/svg"
@@ -446,3 +442,34 @@ function getQueryType(query: String | Node){
             query.charAt(0) === "." ? "id" : 
             query.charAt(0) === "#" ? "class" : "query"
 }
+
+/**
+ * The iterate function gets a node and a callback function... 
+ * It starts iterating the dom from the node, recoursively executing the callback.
+ * If the callback function itself does not call 'return', the iterate function
+ * will return false after executing the recursion.
+ */
+const iterate = (n: Node, cb: Function) => {
+    let itCounter = 0
+    const iterate = (n) => {
+        if (n !== null && n.nodeType === Node.ELEMENT_NODE) {
+            // execute callback with validated node.
+            cb(n)
+            itCounter++
+            // traverse...
+            if (n.hasChildNodes) {
+                iterate(n.firstElementChild)
+            }
+            if (n.nextElementSibling !== null) {
+                iterate(n.nextElementSibling)
+            }
+        } else if (itCounter === 0){
+            throw new Error("parameter 1 is not of type 'Node'.")
+        }
+    }
+
+    iterate(n)
+
+    return false
+}
+
