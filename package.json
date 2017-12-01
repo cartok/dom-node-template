@@ -37,7 +37,6 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "babel-cli": "*",
-    "babel-core": "*",
     "babel-eslint": "*",
     "babel-plugin-transform-flow-strip-types": "*",
     "babel-preset-env": "*",
