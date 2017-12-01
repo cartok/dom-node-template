@@ -1,5 +1,5 @@
 import iterate from "./helpers/iterate.js"
-import XRegExp from "xregexp"
+// import XRegExp from "xregexp"
 
 
 const DEFAULT_OPTIONS = {}
@@ -51,12 +51,8 @@ export default class NodeTemplate {
         // ------------------------------------------------------------------------------------------
         // - merge default options with options
         // - destructure options
-        console.log("before destructuring:", options)
-        // console.log("before destructuring:", options.isSvg)
         options = Object.assign({}, DEFAULT_OPTIONS, options)
         let { isSvg, htmlWithSvg } = options
-        console.log("destructured, isSvg:", isSvg)
-        console.log("destructured, htmlWithSvg:", htmlWithSvg)
         let svgDetected = false
 
         // @improvement/accuracy: add distinction algorithm using npm packages "svg-tag-names" etc.
@@ -83,11 +79,11 @@ export default class NodeTemplate {
                 }
             }
         }
-        console.log("isSvg:", isSvg)
-        console.log("nodeNameFirstTag:", nodeNameFirstTag)
-        console.log("hasMultipleTagGroups:", hasMultipleTagGroups)
-        console.log("hasSingleTagGroup:", hasSingleTagGroup)
-        console.log("svgDetected:", svgDetected)
+        // console.log("isSvg:", isSvg)
+        // console.log("nodeNameFirstTag:", nodeNameFirstTag)
+        // console.log("hasMultipleTagGroups:", hasMultipleTagGroups)
+        // console.log("hasSingleTagGroup:", hasSingleTagGroup)
+        // console.log("svgDetected:", svgDetected)
 
         // check if text has <svg>
         // > depends on 'isSvg'
@@ -199,8 +195,15 @@ export default class NodeTemplate {
                 if(tagGroups !== null && tagGroups.length >= 1){
                     // the code below works for 1 or multiple tag-groups.
                     this.fragment = window.document.createDocumentFragment()
-                    tagGroups.map(g => parser.parseFromString(g, "image/svg+xml"))
-                        .forEach(d => this.fragment.appendChild(d.documentElement))
+                    tagGroups.map(g => { 
+                            console.log("TEXT:", g) // tagGroups dont have the xmlns cause created before!!!
+                            let tmp = parser.parseFromString(g, "image/svg+xml")
+                            return tmp
+                        })
+                        .forEach(d => {
+                            this.fragment.appendChild(d.documentElement)
+                            console.log(d.documentElement)  
+                        })
                 } else {
                     throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
                 }
@@ -248,6 +251,8 @@ export default class NodeTemplate {
                 this.fragment = createDocumentFragment(this.text)
             }
             // ------------------------------------------------------------------------------------------
+            console.log("----------------")
+            console.log(Array.from(this.fragment.childNodes).map(n => n.outerHTML).join(" | "))
         })()
 
         const createInfoText = (() => {
