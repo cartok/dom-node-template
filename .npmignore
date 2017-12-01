@@ -3,3 +3,11 @@
 
 /node_modules/
 /bin/
+
+README.md.advancedexample
+
+package-lock.json
+yarn.lock
+yarn-error-log
+
+.babelrc
