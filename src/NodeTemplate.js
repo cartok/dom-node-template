@@ -41,7 +41,11 @@ export default class NodeTemplate {
         })()
 
         // get all tag-groups
+        this.tagGroups = undefined
         const tagGroups = this.text.match(/<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)(<\/\1>)+/g)
+        if (tagGroups !== null){
+            this.tagGroups = tagGroups
+        }
         // console.log(tagGroups)
         const hasMultipleTagGroups = (tagGroups.length > 1)
         // console.log(hasMultipleTagGroups)
@@ -149,14 +153,13 @@ export default class NodeTemplate {
             if(isSvg){
                 if(hasMultipleTagGroups){
                     // only delete the xmlns attribute from the parent tag-group nodes
-                    const tagGroupsXmlnsRemoved = tagGroups.map(tg => tg.replace(/^(<[a-zA-Z]+[^>]*)(?:\sxmlns=["'][^"']*["'])/, `$1`))
-                    const tagGroupsXmlnsAdded = tagGroupsXmlnsRemoved.map(tg => tg.replace(/^(<[a-zA-Z]+)/, `$1 xmlns="${XMLNS_SVG}"`))
-                    this.text = tagGroupsXmlnsAdded
+                    // i can need the tagGroups later, so i update them aswell
+                    this.tagGroups = this.tagGroups.map(tg => tg.replace(/^(<[a-zA-Z]+[^>]*)(?:\sxmlns=["'][^"']*["'])/, `$1`))
+                    this.tagGroups = this.tagGroups.map(tg => tg.replace(/^(<[a-zA-Z]+)/, `$1 xmlns="${XMLNS_SVG}"`))
+                    this.text = this.tagGroups.join("")
                 } else {
-                    console.log(this.text)
                     this.text = this.text.replace(/^(<[a-zA-Z]+(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/, `$1`)
                     this.text = this.text.replace(/^(<([a-zA-Z]+))\b((?:[^>]*>.*?)(<\/\2>)+)/, `$1 xmlns="${XMLNS_SVG}"$3`)
-                    console.log(this.text)
                 }
             }
             if(!isSvg && hasSvg){
@@ -192,20 +195,16 @@ export default class NodeTemplate {
             // - create a SVGDocument for each tag-group
             // - append its documentElement to a new DocumentFragment
             if(isSvg){
-                if(tagGroups !== null && tagGroups.length >= 1){
-                    // the code below works for 1 or multiple tag-groups.
-                    this.fragment = window.document.createDocumentFragment()
-                    tagGroups.map(g => { 
-                            console.log("TEXT:", g) // tagGroups dont have the xmlns cause created before!!!
-                            let tmp = parser.parseFromString(g, "image/svg+xml")
-                            return tmp
-                        })
-                        .forEach(d => {
-                            this.fragment.appendChild(d.documentElement)
-                            console.log(d.documentElement)  
-                        })
-                } else {
+                if(tagGroups === undefined){
                     throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
+                }
+                this.fragment = window.document.createDocumentFragment()
+                if(hasMultipleTagGroups){
+                    // parse all tag groups and add all documentElements to the fragment
+                    this.tagGroups.map(g => parser.parseFromString(g, "image/svg+xml")).forEach(d => this.fragment.appendChild(d.documentElement))
+                } else {
+                    // parse the tag group and add its documentElement to the fragment
+                    this.fragment.appendChild(parser.parseFromString(this.text, "image/svg+xml").documentElement)
                 }
             } 
             // if its html with svg
@@ -251,8 +250,6 @@ export default class NodeTemplate {
                 this.fragment = createDocumentFragment(this.text)
             }
             // ------------------------------------------------------------------------------------------
-            console.log("----------------")
-            console.log(Array.from(this.fragment.childNodes).map(n => n.outerHTML).join(" | "))
         })()
 
         const createInfoText = (() => {
