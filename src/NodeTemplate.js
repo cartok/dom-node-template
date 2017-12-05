@@ -156,7 +156,12 @@ export default class NodeTemplate {
                     this.text = this.text.replace(/^(<([a-zA-Z]+))\b((?:[^>]*>.*?)(<\/\2>)+)/, `$1 xmlns="${XMLNS_SVG}"$3`)
                 }
             }
-            if(!isSvg && hasSvg){
+            // @rule, imagine following NodeTemplate creation:
+            // new NodeTemplate(`<g><foreignObject><div><svg></svg></div></foreignObject></g>`, { isSvg: true })
+            // if i just check: if(!isSvg && hasSvg)
+            // - the svg inside of the foreignObject tag would not get the correct xmlns attribute.
+            // => theirfore use: if((!isSvg && hasSvg) || (isSvg && hasSvg))
+            if((!isSvg && hasSvg) || (isSvg && hasSvg)){
                 if(hasMultipleSvgs){
                     this.text = this.text.replace(/(<svg(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/g, `$1`)
                     this.text = this.text.replace(/(<svg)\b((?:[^>]*>.*?)(<\/svg>)+)/g, `$1 xmlns="${XMLNS_SVG}"$2`)
