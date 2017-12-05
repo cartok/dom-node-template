@@ -42,9 +42,7 @@ export default class NodeTemplate {
         if (tagGroups !== null){
             this.tagGroups = tagGroups
         }
-        // console.log(tagGroups)
         const hasMultipleTagGroups = (tagGroups.length > 1)
-        // console.log(hasMultipleTagGroups)
         const hasSingleTagGroup = (tagGroups.length === 1)
 
         // handle options
@@ -56,9 +54,9 @@ export default class NodeTemplate {
         let svgDetected = false
 
         // @improvement/accuracy: add distinction algorithm using npm packages "svg-tag-names" etc.
-        // @outdated: if options.isSvg is not given and options.htmlWithSvg is true:
-        // @outdated: - find out if the 'tagText' it is SVG anyways.
-        // @outdated: - assumption: the 'tagText' is SVG if the 'nodeName' of the first tag is "svg".
+        // @outdated-text: if options.isSvg is not given and options.htmlWithSvg is true:
+        // @outdated-text: - find out if the 'tagText' it is SVG anyways.
+        // @outdated-text: - assumption: the 'tagText' is SVG if the 'nodeName' of the first tag is "svg".
         if(isSvg === undefined){
             if(hasMultipleTagGroups){
                 const allTagGroupsAreSvg = tagGroups.every(tg => /^<svg/.test(tg) === true)
@@ -168,16 +166,23 @@ export default class NodeTemplate {
                 }
             }
             if(hasForeignObject){
-                // (<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^"']*["'])*)?(\sxmlns=["'][^"']*["'])([^>]*>)
-                // `$1 xmlns="${XMLNS_FO}"$2$5`
+                // GOT THE SUPER REGEX I SEARCHED FOR ABOVE HERE:
+                // @BUGFIX: this does not apply to the tagGroups. maybe i should always change them and join them after as with isSvg && hasMultipleTagGroups!
+                // (<foreignObject[^>]*><[a-zA-Z\d]+)((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?(\sxmlns=["'][^"']*["'])?((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?([^>]*>)
+                // parts:
+                // 1. match foreignObject tag including all parameters and its first child node opening tag: (<foreignObject[^>]*><[a-zA-Z\d]+)
+                // 1.2.1 match any attributes but not 'xmlns': ((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?
+                // 1.2.2 match 'xmlns' attribute if there is one: (\sxmlns=["'][^"']*["'])?
+                // 1.2.3 match any attributes but not 'xmlns': ((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?
+                // 1.3 match to the end of the fist child node opening tag: ([^>]*>)
+                // > capturing group 3 is 'xmlns' if it allready exists.
+                // > the idea behind excluding the allready existing 'xmlns' attribute is to force a custom attribute as first attribute of the tag!
                 if(hasMultipleForeignObjects){
-                    // this.text = this.text.replace(/(<svg(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/g, `$1`)
-                    // this.text = this.text.replace(/(<svg)\b((?:[^>]*>.*?)(<\/svg>)+)/g, `$1 xmlns="${XMLNS_FO}"$2`)
+                    console.warn("Automated xmlns attribute for <foreignObject> content with multiple tag groups is not yet supported. Will only set xmlns for the first child of the <foreignObject>")
+                    this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?(\sxmlns=["'][^"']*["'])?((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?([^>]*>)/g, `$1 xmlns="${XMLNS_FO}"$2$4$5`)
                 } else {
-                    // this.text = this.text.replace(/(<svg(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/, `$1`)
-                    // this.text = this.text.replace(/(<svg)\b((?:[^>]*>.*?)(<\/svg>)+)/, `$1 xmlns="${XMLNS_FO}"$2`)
+                    this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?(\sxmlns=["'][^"']*["'])?((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?([^>]*>)/g, `$1 xmlns="${XMLNS_FO}"$2$4$5`)
                 }
-                console.warn("automated xmlns for <foreignObject> content is not yet supported. you need to provide the xmlns attributes on your own.")
             }
             // ------------------------------------------------------------------------------------------
         })()

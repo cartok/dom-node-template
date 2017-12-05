@@ -50,25 +50,34 @@ const twoSvgGroups = new NodeTemplate(`
 // console.log(twoSvgGroups)
 */
 
-const forceSvg = new NodeTemplate(`
-    <g data-name="point" 
-        transform="translate(0,0)">
+// const forceSvg = new NodeTemplate(`
+//     <g data-name="point" 
+//         transform="translate(0,0)">
         
-        <circle data-ref="collisionNode"
-            cx="3"
-            cy="3"
-            r="6"
-            fill="red">
-        </circle>
+//         <circle data-ref="collisionNode"
+//             cx="3"
+//             cy="3"
+//             r="6"
+//             fill="red">
+//         </circle>
 
-        <circle data-ref="outlineNode"
-            class="drawable-collision-node drawable-disabled"
-            cx="5"
-            cy="5"
-            r="10"
-            fill="white">
-        </circle>
+//         <circle data-ref="outlineNode"
+//             class="drawable-collision-node drawable-disabled"
+//             cx="5"
+//             cy="5"
+//             r="10"
+//             fill="white">
+//         </circle>
 
-    </g>
-`, { isSvg: true })
+//     </g>
+// `, { isSvg: true })
 // console.log(forceSvg)
+
+const foreignObjectSingle = new NodeTemplate(`
+    <svg>
+        <foreignObject>
+            <div><h1>header</h1></div>
+        </foreignObject>
+    </svg>
+`)
+console.log(foreignObjectSingle)
