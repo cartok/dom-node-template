@@ -1,92 +1,8 @@
-<<<<<<< HEAD
-import iterate from "./helpers/iterate.js"
-=======
 const DEFAULT_OPTIONS = {}
->>>>>>> feature
 
 const XMLNS_SVG = "http://www.w3.org/2000/svg"
 const XMLNS_FO = "http://www.w3.org/1999/xhtml"
 
-<<<<<<< HEAD
-const DEFAULT_OPTIONS = {}
-// let rootNode = undefined
-
-// @thesis: 
-// jsdom's or xmldom's window.document does not support the createContextualFragment() method
-// - search for a in browser testing suite.
-// - or detect that the method is missing when testing with jsdom and reimplement the method.
-if( (window === undefined) || (window !== undefined && window.DOMParser === undefined) ){
-    throw new Error("DOMParser constructor is not defined. If you do TDD or BDD and the code is not executed in a Browser you need a browser replacement.")
-}
-const createDocumentFragment = (window !== undefined && window.document !== undefined && window.document.createRange !== undefined)
-    ? (tagText) => window.document.createRange().createContextualFragment(tagText)
-    : (tagText: String) => {
-        const parser = new window.DOMParser()
-        const __document__ = parser.parseFromString(tagText, "text/html")
-        const fragment = window.document.createDocumentFragment()
-        Array.from(__document__.body.childNodes).forEach(n => fragment.appendChild(n))
-        return fragment
-    }
-
-
-/**
- * TEXT
- * @todo: finish methods
- * > about 'DOMStrings' for querys: https://developer.mozilla.org/en-US/docs/Web/API/DOMString
- * @todo: filter the html comments out of the tagText + option parameter
- */
-export default class NodeTemplate {
-    /**
-     * TEXT
-     * Usage for HTML:              new NodeTemplate(`<tags></tags>`) 
-     * Usage for HTML with SVG:     new NodeTemplate(`<tags></tags>`, { hasSvg: true }) 
-     * Usage for SVG:               new NodeTemplate(`<tags></tags>`, { isSvg: true }) 
-     * @param {String} tagText a string of tags.  
-     * @param {any} options an object with flags: hasSvg, isSvg.
-     */
-    constructor(tagText: String, options: Object) {
-        // parameter handling
-        if(typeof tagText !== "string"){
-            throw new Error("you need to provide a xml string as first parameter.")
-        }
-
-        // options handling
-        // - merge default options with options
-        // - destructure options
-        options = Object.assign(DEFAULT_OPTIONS, options)
-        let { isSvg, hasSvg } = options
-
-        // @feature: remove comments
-        // clean the input string and transform it to a clean one-line string
-        this.text = cleanInputString(tagText)
-
-        // get <svg> tag count
-        const hasMultipleSvgs = (() => {
-            let matches = this.text.match(/<svg[^>]*>/g)
-            return (matches !== null) ? (matches.length > 1) : false
-        })()
-
-        // get node name of first tag
-        const nodeNameFirstTag = (() => {
-            let matches = this.text.match(/^<([a-zA-Z\d]+)[^>]*>/)
-            return (matches !== null) ? matches[1] : undefined
-        })()
-
-        // @improvement/accuracy: add distinction algorithm using npm packages "svg-tag-names" etc.
-        // if options.isSvg is not given and options.hasSvg is true:
-        // - find out if the 'tagText' it is SVG anyways.
-        if(isSvg === undefined && hasSvg !== true){
-            // assumption: the 'tagText' is SVG if the 'nodeName' of the first tag is "svg".
-            isSvg = (nodeNameFirstTag === "svg") ? true : false
-        }
-
-        // if <svg> tag(s) exists 
-        // - find out if a <foreignObject> tag exist
-        const hasForeignObject = (() => {
-            if(isSvg === true || hasSvg === true || hasMultipleSvgs === true){
-                let matches = this.text.match(/<foreignObject[^>]*>/)
-                return (matches !== null) ? (matches.length > 0) : false
-=======
 const parser = new window.DOMParser()
 const createDocumentFragment = (window !== undefined && window.document !== undefined && window.document.createRange !== undefined)
     ? (tagText) => window.document.createRange().createContextualFragment(tagText)
@@ -202,83 +118,10 @@ export default class NodeTemplate {
         const hasForeignObject = (() => {
             if(hasSvg || hasMultipleSvgs){
                 return /<foreignObject/.test(this.text)
->>>>>>> feature
             } else {
                 return false
             }
         })()
-<<<<<<< HEAD
-
-        // if <foreignObject> tag exists 
-        // - find out if multiple <foreignObject> tags exist
-        const hasMultipleForeignObjects = (() => {
-            if(hasForeignObject === true){
-                let matches = this.text.match(/<foreignObject[^>]*>/g)
-                return (matches !== null) ? (matches.length > 1) : false
-            } else {
-                return false
-            }
-        })()
-
-        // namespace handling
-        // regex patterns:
-        // match any attributes or none: ((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?
-        // match xmlns attribute: (\sxmlns=["'][^\s]+["'])
-        // match to end of tag: ([^>]*>)
-        if(isSvg === true && hasMultipleSvgs === false){
-            // if "image/svg+xml" for first element: replace existing xmlns attribute or add it. 
-            // same pattern like before, but for any starting tag and not global.
-            this.text = this.text.replace(/(<[a-zA-Z]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/, `$1 xmlns="http://www.w3.org/2000/svg"$2$5`)
-        }
-
-        // if one or more svgs exist
-        // - for all <svg>: replace existing xmlns attribute or add it. 
-        // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
-        if(hasSvg === true || hasMultipleSvgs === true){
-            this.text = this.text.replace(/(<svg)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3.org/2000/svg"$2$5`)
-        }
-
-        // if <foreignObject>s exist 
-        // - for all <foreignObject>.firstChild: replace existing xmlns attribute or add it. 
-        // > the resulting pattern will remove old xmlns attribute and add a new xmlns attribute directly after the tag name
-        if(hasForeignObject === true){
-            this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((\s[a-zA-Z_-]+=["'][^\s]+["'])*)?(\sxmlns=["'][^\s]+["'])([^>]*>)/g, `$1 xmlns="http://www.w3.org/1999/xhtml"$2$5`)
-        }
-
-        // parse
-        this.fragment = createDocumentFragment(this.text)
-
-        // /*
-        // 'It\'s a HTML Fragment with a unifying root element containing just one <svg> tag without a <foreignObject> tag. without a <svg> tag without  a <foreignObject> tag.'
-        // 'It\'s a SVG Fragment with a unifying root element containing just one <svg> tag without a <foreignObject> tag. without a <svg> tag without  a <foreignObject> tag.'
-        // */
-        // // add type info text
-        // this.info = "It's a"
-        // + `${  !isSvg ?                                                             " HTML Fragment"                    :   " SVG Fragment"  }`
-        // + `${  this.fragment.childElementCount > 1 ?                                " without a unifying root element"  :   " with a unifying root element"  }`
-
-        // + `${  isSvg && hasMultipleSvgs ?                                           " containing multiple <svg> tags"   :   " containing just one <svg> tag"  }`
-        // + `${  isSvg && hasForeignObject ?                                          " with"                             :   " without"  }`
-        // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " multiple"                         :   " a"  }`
-        // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " <foreignObject> tags."            :   " <foreignObject> tag."  }`
-
-        // + `${  !isSvg && hasSvg ?                                                   " containing"                       :   " without"  }` 
-        // + `${  !isSvg && hasSvg && !hasMultipleSvgs ?                               " multiple <svg> tags"              :   " a <svg> tag"  }` 
-        // + `${  !isSvg && hasSvg && hasForeignObject ?                               " with"                             :   " without"  } `
-        // + `${  !isSvg && hasSvg && hasForeignObject && hasMultipleForeignObjects ?  " multiple"                         :   " a"  }` 
-        // + `${  !isSvg && hasSvg && hasForeignObject && hasMultipleForeignObjects ?  " <foreignObject> tags."            :   " <foreignObject> tag."  }` 
-
-        // add element references from 'data-tref' and 'id' attributes
-        this.refs = {}
-        this.ids = {}
-        iterate(this.fragment.firstChild, (n) => {
-            // add node data references
-            const refName = (n.dataset === undefined) 
-                ? n.getAttribute("data-ref")
-                : n.dataset.ref
-            if (refName !== undefined ) {
-                this.refs[refName] = n
-=======
 
         // if <foreignObject> tag exists 
         // - find out if multiple <foreignObject> tags exist
@@ -340,17 +183,10 @@ export default class NodeTemplate {
                 } else {
                     this.text = this.text.replace(/(<foreignObject[^>]*><[a-zA-Z\d]+)((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?(\sxmlns=["'][^"']*["'])?((?:\s(?!xmlns)[a-zA-Z_-]+=["'][^"']*["'])*)?([^>]*>)/g, `$1 xmlns="${XMLNS_FO}"$2$4$5`)
                 }
->>>>>>> feature
             }
             // ------------------------------------------------------------------------------------------
         })()
 
-<<<<<<< HEAD
-            // add node id references
-            const idName = n.id
-            if (idName !== "") {
-                this.ids[idName] = n
-=======
         const parse = (() => {
             // parsing
             // ------------------------------------------------------------------------------------------
@@ -413,7 +249,6 @@ export default class NodeTemplate {
             // no need to separate the tag-groups if its "text/html".
             else {
                 this.fragment = createDocumentFragment(this.text)
->>>>>>> feature
             }
             // ------------------------------------------------------------------------------------------
         })()
@@ -433,16 +268,6 @@ export default class NodeTemplate {
             // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " multiple"                         :   " a"  }`
             // + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " <foreignObject> tags."            :   " <foreignObject> tag."  }`
 
-<<<<<<< HEAD
-        // add root reference
-        if(this.fragment.childElementCount === 1){
-            this.root = this.fragment.firstChild
-        } 
-        // if multiple roots exist return them as array
-        else if(this.fragment.childElementCount > 1){
-            this.root = this.fragment.childNodes
-        }
-=======
             // + `${  !isSvg && htmlWithSvg ?                                                   " containing"                       :   " without"  }` 
             // + `${  !isSvg && htmlWithSvg && !hasMultipleSvgs ?                               " multiple <svg> tags"              :   " a <svg> tag"  }` 
             // + `${  !isSvg && htmlWithSvg && hasForeignObject ?                               " with"                             :   " without"  } `
@@ -481,7 +306,6 @@ export default class NodeTemplate {
                 ? this.fragment.firstElementChild
                 : Array.from(this.fragment.childNodes)
         })()
->>>>>>> feature
     }
     /**
      * About 'DOMStrings' for querys: https://developer.mozilla.org/en-US/docs/Web/API/DOMString
