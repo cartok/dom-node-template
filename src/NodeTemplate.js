@@ -37,6 +37,47 @@ export default class NodeTemplate {
         })()
 
         // get all tag-groups
+        /**
+        
+        - 1.    match from first opening tag to next opening tag
+                => (<([a-zA-Z0-9]+)\b(?:[^>]*>.*?))(?=<\2)(.*)
+        - 2.1   extract the match, remove it from the string
+                ? performance: regex match rest vs. string substring
+                => the best would be: get position of the last matched symbol and create a substring from position+1 to end.
+                RESULT: https://jsperf.com/extract-text-part-and-update-text-regex-vs-substring/1
+        - 2.2.  push the match on stack and save the tag name 
+        
+        // test of the regex application
+        1. <g id="1.0">ANYTHING<g id="1.1">ANYTHING</g><g id="2.0"></g>
+        2. <g id="1.1">ANYTHING</g><g id="2.0"></g>
+        3. <g id="2.0"></g>
+        => 3.   => ERROR: Does not match the group because positive lookahead does not match.
+                => RESOLUTION 1: Detect this and handle it 
+                => RESOLUTION 2: Change reged end to: (?=<\2|$) ONLY WORKS FOR ONE-LINE TEXT -----------fail, no need, if no match, then to "cascading"
+
+
+        <g id="1.0">ANYTHING</g><g></g>
+        <g id="1.0">ANYTHING<g></g></g>
+
+
+        str-2: <g id="1.0">ANYTHING</g><g></g>
+        reg-2: 	(<([a-zA-Z0-9]+)\b(?:[^>]*>.*?(?!<\/\2>)))(?=<\2|$)|
+                (<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)<\/\4>)
+        reg-2.2: (<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)<\/\2>)
+        str-1: <g id="1.0">ANYTHING</g><rect></rect>
+        reg-1: (<([a-zA-Z0-9]+)\b(?:[^>]*>.*?(?!<\/\2>)))(?=<\2|$)
+        problem-1: no match at all, cause no second g
+        (problem-2): could discard text before first match?
+        result-1: if no match, then first tag is not nested in itself again.
+        if-1: use reg-2.2 to cut the starting tag group out
+
+        (<([a-zA-Z0-9]+)\b(?:[^>]*>.*?(?!<\/\2>)))(?=<\2|$)
+
+
+        <g id="1.0">ANYTHING</g><g></g>
+        (<([a-zA-Z0-9]+)\b(?:[^>]*>.*?(?!<\/\2>)))(?=<\2|$)
+        problem: SHOULD NOT MATCH, NOT NESTED!
+         */
         this.tagGroups = undefined
         const tagGroups = this.text.match(/<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)(<\/\1>)+/g)
         if (tagGroups !== null){

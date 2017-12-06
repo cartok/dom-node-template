@@ -73,11 +73,21 @@ const twoSvgGroups = new NodeTemplate(`
 // `, { isSvg: true })
 // console.log(forceSvg)
 
-const foreignObjectSingle = new NodeTemplate(`
-    <svg>
+// const foreignObjectSingle = new NodeTemplate(`
+//     <svg>
+//         <foreignObject>
+//             <div><h1>header</h1></div>
+//         </foreignObject>
+//     </svg>
+// `)
+// console.log(foreignObjectSingle)
+
+
+const foWithSvg = new NodeTemplate(`
+    <g>
         <foreignObject>
-            <div><h1>header</h1></div>
+            <div><h1>header</h1><svg></svg></div>
         </foreignObject>
-    </svg>
-`)
-console.log(foreignObjectSingle)
+    </g>
+`, { isSvg: true })
+console.log(foWithSvg)
