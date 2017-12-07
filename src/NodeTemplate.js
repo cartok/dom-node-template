@@ -57,27 +57,44 @@ export default class NodeTemplate {
             <circle id="next tag group"/><g id="another one">
         RESULT: 
             ^(<(\w+)(?:[^\/>]*)(?:(?>(\/)>)|(?:>.*?(?=<\/\2|<\2))))
-        
+            * javascript does not support atomic groups (?>x) theirfore replace it with (?=(x))\1
+            ^(<(\w+)(?:[^\/>]*)(?:(?=((\/)>))\3|(?:>.*?(?=<\/\2|<\2))))
+                * if the tag name is provided:
+                ^(<g(?:[^\/>]*)(?:(?=((\/)>))\2|(?:>.*?(?=<\/g|<g))))
+                    * if the regex is created with the regexp constructor escape the escapes:
+                    ^(<g(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/g|<g))))
+                    * if the tag name is a variable
+                    ^(<${tagname}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${tagname}|<${tagname}))))
+
         regex for 'closing tag and content': 
         PLAYGROUND:
             </g><rect/><svg></svg></g>
             </g></g><anoterhTagGroupStarts>
             </g><anoterhTagGroupStarts>
             </g>
-
+            
             <g id="1.0">
-                <rect/>
-                <g id="1.1">
-                    <rect/>
-                </g>
-                <rect/>
+            <rect/>
+            <g id="1.1">
+            <rect/>
             </g>
+            <rect/>
+            </g>
+            
 
-        RESULT: 
-            ^(<\/g>(?:.*?)(?=<\/g)|(?:<\/g>))        
+        RESULT:
+            ** got no general solution if the tagname is not provided, but dont need it for the algorithm.
+            * if the tag name is provided:
+            ^(<\/g>(?:.*?)(?=(?:<\/g)|(?:<g))|(?:<\/g>))
+            * if the regex is created with the regexp constructor escape the escapes:
+            ^(<\\/${tagname}>(?:.*?)(?=(?:<\\/${tagname})|(?:<${tagname}))|(?:<\\/${tagname}>))
 
         ----------------------------------------------------------------------------------------------------------------------------------
-
+        
+        best way to remove a match from a string: https://jsperf.com/extract-text-part-and-update-text-regex-vs-substring/1
+        
+        ----------------------------------------------------------------------------------------------------------------------------------
+        
         outer algorithm:
             params: 
                 tagString: String
@@ -102,62 +119,137 @@ export default class NodeTemplate {
         // start creating a tag group string that will be pushed to tagGroupStrings
         1. get the first opening tag and its content 
            content ends before next occursion or close tag. (@REGEX)
-        2. save the tagname: tagName = match[1]
+        2. save the tagname: firstTagName = match[1]
         3. RECOURSION:
-            IF the saved tag is a selfclosing tag: (match[2] === '/') (@REGEX)
+
+            IF the saved tag is a selfclosing tag: (match[2] === '/>') (@REGEX)
                 // finish self closing tag group and continue
-                3.1.1 push the selfclosing tagGroup: tagGroupStrings.push(match[0])
-                3.1.2 OUTER RECURSION (!!! new tag group !!!)
-            ELSE IF more opening tags with the same tagname exist: (match[1] === tagName) (@REGEX)
-                IF:     
-                    // collect inner tags with the same tag name
-                    @FUNCTION:START
-                    3.2.1.1. add the match to the tag group string: tagGroupString += match[0]
-                    3.2.1.2. push the match to opening tags: openingTagsAndContent.push(match[0])
-                    3.2.1.3. remove the match from the string: https://jsperf.com/extract-text-part-and-update-text-regex-vs-substring/1
-                    @FUNCTION:END
-                    3.2.1.4. INNER RECURSION (!!! the tag group string is incomplete !!!)
-                ELSE:   
-                    // collect closing tags with the tag name
-                    IF string starts with the closing tag (@REGEX) 
-                        @FUNCTION:START
-                        3.2.1.1. add the match to the tag group string: tagGroupString += match[0]
-                        3.2.2.2. push the match to close tags: closingTagsAndContent.push(match[0])
-                        3.2.2.3. remove the closing tag from the string: https://jsperf.com/extract-text-part-and-update-text-regex-vs-substring/1
-                        @FUNCTION:END
-                        IF the tag string is not empty: tagString.length > 0
-                        and the tag group string is incomplete: openingTagsAndContent.length !== closingTagsAndContent.length 
-                            3.2.2.4. INNER RECURSION
-                        ELSE IF the tag group string is incomplete: openingTagsAndContent.length !== closingTagsAndContent.length 
-                        and the tag string is empty: tagString.length === 0
-                            4.1.1.1 could not finish matching tag group, throw an error.
-                        ELSE 
-                            // 4.1.1.2 push the final tag group string: tagGroupStrings.push(tagGroupString)
-                            4.1.1.2 RETURN tagGroupString
+                @FUNCTION:START
+                3.1.1. RETURN the selfclosing tagGroupString and the remaining tagText
+                => OUTER RECURSION / OR LOOP
+
+            ELSE IF string starts with another opening tag (@REGEX)
+                // collect inner tags with the same tag name
+                @FUNCTION:START
+                3.2.1.1. add the match to the tag group string: tagGroupString += match[0]
+                3.2.1.2. push the match to opening tags: openingTagsAndContent.push(match[0])
+                3.2.1.3. remove the match from the string
+                @FUNCTION:END
+                3.2.1.4. the tag group string must be incomplete cause new opening tag.
+                => INNER RECURSION / OR LOOP
+         
+            ELSE IF string starts with the closing tag (@REGEX) 
+                // collect closing tags with the tag name
+                @FUNCTION:START
+                3.2.1.1. add the match to the tag group string: tagGroupString += match[0]
+                3.2.2.2. push the match to close tags: closingTagsAndContent.push(match[0])
+                3.2.2.3. remove the closing tag from the string
+                @FUNCTION:END
+
+                IF the tag string is not empty: tagString.length > 0 && the tag group string is incomplete: openingTagsAndContent.length !== closingTagsAndContent.length 
+                    3.2.2.4. INNER RECURSION
+                ELSE IF the tag group string is incomplete: openingTagsAndContent.length !== closingTagsAndContent.length 
+                and the tag string is empty: tagString.length === 0
+                    4.1.1.1 could not finish matching tag group, throw an error.
+                ELSE 
+                    4.1.1.1 RETURN tagGroupString and the remaining tagText
+                            => OUTER RECURSION CONTINUES
         */
-        function createTagGroupStrings(tagText: String){
+        function createTagGroupStrings_iterative(tagText: String){
+            // outer context
             const tagGroups: Array<String> = []
-            (function createTagGroupString(tagText: String){
-                let tagName: String = undefined
-                const tagGroupString: String = ""
-                const openingTagsAndContent: Array<String> = []
-                const closingTagsAndContent: Array<String> = []
-                
-            })(tagText)
-            return tagGroups
+
+            // execute tag group creation
+            while(tagText.length > 0){
+                const firstTagName = (() => {
+                    let matches = tagText.match(/^<([a-zA-Z\d]+)/)
+                    return (matches !== null) ? matches[1] : undefined
+                })()
+                let tagGroupString = createTagGroupString(firstTagName, false)
+                if(tagGroupString !== undefined){
+                    tagGroups.push(tagGroupString)
+                } else {
+                    throw new Error("Function createTagGroupString() returned 'undefined'.")
+                }
+            }
+
+            // recursive inner function that can use the outer context
+            function createTagGroupString(firstTagName: String, debug: Boolean){
+                let tagGroupString: String = "" // not needed if using recursion.
+                const openingTagsAndContent: Array<String> = [] // could be just counters aswell.
+                const closingTagsAndContent: Array<String> = [] // could be just counters aswell.
+
+                while(openingTagsAndContent.length === 0 || openingTagsAndContent.length !== closingTagsAndContent.length){
+                    const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
+                    let openingTagMatches = tagText.match(openingTagRegex)
+
+                    // 0. no need to accumulate if the tag is a selfclosing tag 
+                    if(openingTagMatches !== null && openingTagMatches[2] === "/>"){
+                        tagText = tagText.substring(openingTagMatches[0].length)
+                        return openingTagMatches[0]
+                    }
+                    
+                    // 1. accumulate opening tags
+                    while(openingTagMatches !== null && openingTagMatches[0] !== undefined){
+                        if(debug){
+                            console.log("\nOPENING TAG COLLECTION")
+                            console.log("tagText:", tagText)
+                            console.log("match[0]:", openingTagMatches[0])
+                        }
+                        // > could use a update function here
+                        tagGroupString += openingTagMatches[0]
+                        openingTagsAndContent.push(openingTagMatches[0])   
+                        tagText = tagText.substring(openingTagMatches[0].length)
+                        openingTagMatches = tagText.match(openingTagRegex)
+                        if(debug){
+                            console.log("tagGroupString:", tagGroupString)
+                            console.log("openingTagsAndContent:", openingTagsAndContent)
+                        }
+                    }
+                    
+                    // 2. accumulate closing tags
+                    // validate if the number of opening tags matches the number of closing tags
+                    const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
+                    let closingTagMatches = tagText.match(closingTagRegex)
+                    while(closingTagMatches !== null && closingTagMatches[0] !== undefined){
+                        if(debug){
+                            console.log("\nCLOSING TAG COLLECTION")
+                            console.log("tagText:", tagText)
+                            console.log("match[0]:", closingTagMatches[0])
+                        }
+                        // > could use a update function here
+                        tagGroupString += closingTagMatches[0]
+                        closingTagsAndContent.push(closingTagMatches[0])
+                        tagText = tagText.substring(closingTagMatches[0].length)
+                        closingTagMatches = tagText.match(closingTagRegex)
+                        if(debug){
+                            console.log("tagGroupString:", tagGroupString)
+                            console.log("closingTagsAndContent:", closingTagsAndContent)
+                        }
+                    }
+
+                    if(openingTagsAndContent.length === closingTagsAndContent.length){
+                        return tagGroupString
+                    }
+                }
+            }
+
+            // check result
+            if(tagGroups.length < 1){
+                throw new Error(`Could not create tag groups with the text: ${tagText}`)
+            } else {
+                return tagGroups
+            }
         }
-
-
-
+    
         // OLD:
-        const tagGroups = this.text.match(/<([a-zA-Z0-9]+)\b(?:[^>]*>.*?)(<\/\1>)+/g)
-        if (tagGroups !== null){
-            this.tagGroups = tagGroups
-        }
-        const hasMultipleTagGroups = (tagGroups.length > 1)
-        const hasSingleTagGroup = (tagGroups.length === 1)
+        this.tagGroups = createTagGroupStrings_iterative(this.text)
+        const hasMultipleTagGroups = (this.tagGroups.length > 1)
+        const hasSingleTagGroup = (this.tagGroups.length === 1)
         
-
+        // console.log(this.tagGroups)
+        // console.log(hasMultipleTagGroups)
+        // console.log(hasSingleTagGroup)
 
 
 
