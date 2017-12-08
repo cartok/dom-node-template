@@ -233,18 +233,51 @@ export default class NodeTemplate {
         }
 
 
-        // function createTagGroupStrings_recoursive(tagText: String){
-        //     // outer context
-        //     const tagGroups: Array<String> = []
-        //     if(tagText.length === 0){
-        //         return
-        //     }            
-        // }
-        // function createTagGroupString(tagText: String, firstTagName: String){
+        function createTagGroupStrings_recoursive(tagText: String, array = []){
+            const firstTagName = (() => {
+                let matches = tagText.match(/^<([a-zA-Z\d]+)/)
+                return (matches !== null) ? matches[1] : undefined
+            })()
+            array.push(createTagGroupString(tagText, firstTagName))
+            tagText.substring(array[array.length-1].length)
+            return (tagText.length > 0) 
+                ? createTagGroupStrings_recoursive(tagText, array)
+                : array
+        }
+        function createTagGroupString(tagText: String, firstTagName: String, tagGroupString = "", unclosedTagCnt = undefined){
+            const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
+            const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
+            const unclosedTagExist = () => unclosedTagCnt !== 0
             
-        // }
+            if(!unclosedTagExist()){
+                // finish recursion
+                return tagGroupString
+            } else {
+                unclosedTagCnt = (unclosedTagCnt === undefined) ? 0 : unclosedTagCnt
+                // 1. accumulate opening tags
+                let openingTagMatches = tagText.match(openingTagRegex)
+                if(openingTagMatches !== null && openingTagMatches[0] !== undefined){
+                    // no need to accumulate if the tag is a selfclosing tag 
+                    if(openingTagMatches[2] === "/>"){
+                        return !unclosedTagExist() ? openingTagMatches[0]
+                            : tagGroupString + createTagGroupString(tagText.substring(openingTagMatches[0].length), firstTagName, unclosedTagCnt)
+                    } 
+                    else {
+                        return tagGroupString + createTagGroupString(tagText.substring(openingTagMatches[0].length), firstTagName, unclosedTagCnt++)
+                    }
+                }
     
-        this.tagGroups = createTagGroupStrings_iterative(this.text)
+                // 2. accumulate closing tags
+                let closingTagMatches = tagText.match(closingTagRegex)
+                if(closingTagMatches !== null && closingTagMatches[0] !== undefined){
+                    return tagGroupString + createTagGroupString(tagText.substring(closingTagMatches[0].length), firstTagName, unclosedTagCnt--)
+                }
+            }
+
+        }
+            
+        // this.tagGroups = createTagGroupStrings_iterative(this.text)
+        this.tagGroups = createTagGroupStrings_recoursive(this.text)
         const hasMultipleTagGroups = (this.tagGroups.length > 1)
         const hasSingleTagGroup = (this.tagGroups.length === 1)
         
