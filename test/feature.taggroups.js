@@ -70,6 +70,13 @@ const nt6 = new NodeTemplate(`
 `)
 console.log("\nnt6:", nt6)
 
+const nt7 = new NodeTemplate(`
+    <div>
+        <div/>
+    </div>
+`)
+console.log("\nnt7:", nt7)
+
 // const ntx = new NodeTemplate(`
 //     <g id="1.0">
 //         <g id="1.1"></g>
