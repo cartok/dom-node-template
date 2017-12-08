@@ -176,10 +176,8 @@ export default class NodeTemplate {
             // recursive inner function that can use the outer context
             function createTagGroupString(firstTagName: String, debug: Boolean){
                 let tagGroupString: String = "" // not needed if using recursion.
-                let unclosedTagExist = () => unclosedTagCnt !== 0
                 let unclosedTagCnt = 0
-                const openingTagsAndContent: Array<String> = [] // could be just counters aswell.
-                const closingTagsAndContent: Array<String> = [] // could be just counters aswell.
+                const unclosedTagExist = () => unclosedTagCnt !== 0
 
                 do{
                     const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
