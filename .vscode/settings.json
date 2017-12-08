@@ -7,9 +7,9 @@
         
         // root
         "static": true,         
-        "build": true,         
-        "built": true,         
-        "dist": true,         
+        // "build": true,         
+        // "built": true,         
+        // "dist": true,         
         "node_modules": true,
         "__pycache__": true, 
 
