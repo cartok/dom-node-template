@@ -175,62 +175,50 @@ export default class NodeTemplate {
 
             // recursive inner function that can use the outer context
             function createTagGroupString(firstTagName: String, debug: Boolean){
+                
                 let tagGroupString: String = "" // not needed if using recursion.
+                
                 let unclosedTagCnt = 0
                 const unclosedTagExist = () => unclosedTagCnt !== 0
+                
+                const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
+                const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
 
                 do{
-                    const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
-                    let openingTagMatches = tagText.match(openingTagRegex)
-    
                     
+                    let openingTagMatches = undefined
+                    let closingTagMatches = undefined
+                        
                     // 1. accumulate opening tags
-                    while(openingTagMatches !== null && openingTagMatches[0] !== undefined){
-                        if(debug){
-                            console.log("\nOPENING TAG COLLECTION")
-                            console.log("tagText:", tagText)
-                            console.log("match[0]:", openingTagMatches[0])
-                        }
-                        // > could use a update function here
-                        tagText = tagText.substring(openingTagMatches[0].length)
-                        tagGroupString += openingTagMatches[0]
-                        // no need to accumulate if the tag is a selfclosing tag 
-                        if(openingTagMatches[2] === "/>"){
-                            if(!unclosedTagExist()){
-                                return tagGroupString
+                    do {
+                        openingTagMatches = tagText.match(openingTagRegex)
+                        if(openingTagMatches !== null && openingTagMatches[0] !== undefined){
+                            tagText = tagText.substring(openingTagMatches[0].length)
+                            tagGroupString += openingTagMatches[0]
+                            // no need to accumulate if the tag is a selfclosing tag 
+                            if(openingTagMatches[2] === "/>"){
+                                if(!unclosedTagExist()){
+                                    return tagGroupString
+                                } else {
+                                    openingTagMatches = tagText.match(openingTagRegex)
+                                    continue
+                                }
                             } else {
-                                openingTagMatches = tagText.match(openingTagRegex)
-                                continue
+                                unclosedTagCnt += 1
                             }
-                        } else {
-                            unclosedTagCnt += 1
-                            openingTagMatches = tagText.match(openingTagRegex)
                         }
-                        if(debug){
-                            console.log("tagGroupString:", tagGroupString)
-                        }
-                    }
-                    
+                    } while(openingTagMatches !== null && openingTagMatches[0] !== undefined)
+
                     // 2. accumulate closing tags
-                    // validate if the number of opening tags matches the number of closing tags
-                    const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
-                    let closingTagMatches = tagText.match(closingTagRegex)
-                    while(closingTagMatches !== null && closingTagMatches[0] !== undefined){
-                        if(debug){
-                            console.log("\nCLOSING TAG COLLECTION")
-                            console.log("tagText:", tagText)
-                            console.log("match[0]:", closingTagMatches[0])
-                        }
-                        // > could use a update function here
-                        tagText = tagText.substring(closingTagMatches[0].length)
-                        tagGroupString += closingTagMatches[0]
-                        unclosedTagCnt -= 1
+                    do {
                         closingTagMatches = tagText.match(closingTagRegex)
-                        if(debug){
-                            console.log("tagGroupString:", tagGroupString)
+                        if(closingTagMatches !== null && closingTagMatches[0] !== undefined){
+                            tagText = tagText.substring(closingTagMatches[0].length)
+                            tagGroupString += closingTagMatches[0]
+                            unclosedTagCnt -= 1
                         }
-                    }
-    
+                    } while(closingTagMatches !== null && closingTagMatches[0] !== undefined)
+
                 } while(unclosedTagExist())
                 
                 return tagGroupString
@@ -238,14 +226,23 @@ export default class NodeTemplate {
 
             // check result
             if(tagGroups.length < 1){
-                throw new Error(`Could not create tag groups with the text: ${tagText}`)
+                throw new Error(`Could not create tag groups for '${tagText}'`)
             } else {
                 return tagGroups
             }
         }
-        function createTagGroupStrings_recoursive(tagText: String){
 
-        }
+
+        // function createTagGroupStrings_recoursive(tagText: String){
+        //     // outer context
+        //     const tagGroups: Array<String> = []
+        //     if(tagText.length === 0){
+        //         return
+        //     }            
+        // }
+        // function createTagGroupString(tagText: String, firstTagName: String){
+            
+        // }
     
         this.tagGroups = createTagGroupStrings_iterative(this.text)
         const hasMultipleTagGroups = (this.tagGroups.length > 1)
