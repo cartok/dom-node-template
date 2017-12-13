@@ -7,9 +7,9 @@
         
         // root
         "static": true,         
-        // "build": true,         
-        // "built": true,         
-        // "dist": true,         
+        "build": true,         
+        "built": true,         
+        "dist": true,         
         "node_modules": true,
         "__pycache__": true, 
 
@@ -46,5 +46,6 @@
     "html.format.enable": false,
     "typescript.format.enable": false,
     "javascript.format.enable": false,
-    "javascript.validate.enable": false
+    "javascript.validate.enable": false,
+    "editor.renderWhitespace": "none"
 }

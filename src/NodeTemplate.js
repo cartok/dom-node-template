@@ -30,132 +30,8 @@ export default class NodeTemplate {
         // clean the input string and transform it to a clean one-line string
         this.text = cleanInputString(tagText)
 
-        // get node name of first tag
-        const nodeNameFirstTag = (() => {
-            let matches = this.text.match(/^<([a-zA-Z\d]+)[^>]*>/)
-            return (matches !== null) ? matches[1] : undefined
-        })()
-
         // get all tag-groups
-        this.tagGroups = undefined
-        /* 
-        DAY: 07.12.17
-        ----------------------------------------------------------------------------------------------------------------------------------
-
-        regex for 'opening tag and content', with one more capture if selfclosing tag:
-        PLAYGROUND: 
-            <g id="1.0"><content></content><g><c></c></g></g>
-            <rect/><jo/>
-
-            <g id="1.0"><content></content><g><c></c></g></g>
-            <g><c></c></g>
-            <g></g>
-
-            <rect/><SelfClosingShouldNotHaveContent><rect
-            <rect id="jojo"/><SelfClosingShouldNotHaveContent>
-            <rect/><circle id="next tag group"/><g id="another">
-            <circle id="next tag group"/><g id="another one">
-        RESULT: 
-            ^(<(\w+)(?:[^\/>]*)(?:(?>(\/)>)|(?:>.*?(?=<\/\2|<\2))))
-            * javascript does not support atomic groups (?>x) theirfore replace it with (?=(x))\1
-            ^(<(\w+)(?:[^\/>]*)(?:(?=((\/)>))\3|(?:>.*?(?=<\/\2|<\2))))
-                * if the tag name is provided:
-                ^(<g(?:[^\/>]*)(?:(?=((\/)>))\2|(?:>.*?(?=<\/g|<g))))
-                    * if the regex is created with the regexp constructor escape the escapes:
-                    ^(<g(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/g|<g))))
-                    * if the tag name is a variable
-                    ^(<${tagname}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${tagname}|<${tagname}))))
-
-        regex for 'closing tag and content': 
-        PLAYGROUND:
-            </g><rect/><svg></svg></g>
-            </g></g><anoterhTagGroupStarts>
-            </g><anoterhTagGroupStarts>
-            </g>
-            
-            <g id="1.0">
-            <rect/>
-            <g id="1.1">
-            <rect/>
-            </g>
-            <rect/>
-            </g>
-            
-
-        RESULT:
-            ** got no general solution if the tagname is not provided, but dont need it for the algorithm.
-            * if the tag name is provided:
-            ^(<\/g>(?:.*?)(?=(?:<\/g)|(?:<g))|(?:<\/g>))
-            * if the regex is created with the regexp constructor escape the escapes:
-            ^(<\\/${tagname}>(?:.*?)(?=(?:<\\/${tagname})|(?:<${tagname}))|(?:<\\/${tagname}>))
-
-        ----------------------------------------------------------------------------------------------------------------------------------
-        
-        best way to remove a match from a string: https://jsperf.com/extract-text-part-and-update-text-regex-vs-substring/1
-        
-        ----------------------------------------------------------------------------------------------------------------------------------
-        
-        outer algorithm:
-            params: 
-                tagString: String
-            context:
-                const tagGroupStrings: Array<String>
-
-        // create an array of tag group strings
-        IF the tag string is not empty: tagString.length > 0
-            1.1 execute the inner algorithm (to fill the array of tag group strings)
-        ELSE RETURN tagGroupStrings
-
-        inner algorithm: 
-            params:
-                tagString: String
-
-            context:
-                const tagName: String
-                const openingTagsAndContent: Array<String>
-                const closingTagsAndContent: Array<String>
-                const tagGroupString: String
-
-        // start creating a tag group string that will be pushed to tagGroupStrings
-        1. get the first opening tag and its content 
-           content ends before next occursion or close tag. (@REGEX)
-        2. save the tagname: firstTagName = match[1]
-        3. RECOURSION:
-
-            IF the saved tag is a selfclosing tag: (match[2] === '/>') (@REGEX)
-                // finish self closing tag group and continue
-                @FUNCTION:START
-                3.1.1. RETURN the selfclosing tagGroupString and the remaining tagText
-                => OUTER RECURSION / OR LOOP
-
-            ELSE IF string starts with another opening tag (@REGEX)
-                // collect inner tags with the same tag name
-                @FUNCTION:START
-                3.2.1.1. add the match to the tag group string: tagGroupString += match[0]
-                3.2.1.2. push the match to opening tags: openingTagsAndContent.push(match[0])
-                3.2.1.3. remove the match from the string
-                @FUNCTION:END
-                3.2.1.4. the tag group string must be incomplete cause new opening tag.
-                => INNER RECURSION / OR LOOP
-         
-            ELSE IF string starts with the closing tag (@REGEX) 
-                // collect closing tags with the tag name
-                @FUNCTION:START
-                3.2.1.1. add the match to the tag group string: tagGroupString += match[0]
-                3.2.2.2. push the match to close tags: closingTagsAndContent.push(match[0])
-                3.2.2.3. remove the closing tag from the string
-                @FUNCTION:END
-
-                IF the tag string is not empty: tagString.length > 0 && the tag group string is incomplete: openingTagsAndContent.length !== closingTagsAndContent.length 
-                    3.2.2.4. INNER RECURSION
-                ELSE IF the tag group string is incomplete: openingTagsAndContent.length !== closingTagsAndContent.length 
-                and the tag string is empty: tagString.length === 0
-                    4.1.1.1 could not finish matching tag group, throw an error.
-                ELSE 
-                    4.1.1.1 RETURN tagGroupString and the remaining tagText
-                            => OUTER RECURSION CONTINUES
-        */
-        function createTagGroupStrings_iterative(tagText: String){
+        function createTagGroupStrings(tagText: String){
             // outer context
             const tagGroups: Array<String> = []
 
@@ -231,66 +107,11 @@ export default class NodeTemplate {
                 return tagGroups
             }
         }
-
-
-        function createTagGroupStrings_recoursive(tagText: String, array = []){
-            if(tagText.length > 0){
-                const firstTagName = (() => {
-                    let matches = tagText.match(/^<([a-zA-Z\d]+)/)
-                    return (matches !== null) ? matches[1] : undefined
-                })()
-                array.push(createTagGroupString(tagText, firstTagName))
-                return createTagGroupStrings_recoursive(tagText.substr(array[array.length-1].length), array)
-            } else {
-                return array
-            }
-            function createTagGroupString(text: String, tagName: String, tagStr = "", unclosed = undefined){
-                const openingTagRegex = new RegExp(`^(<${tagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${tagName}|<${tagName}))))`)
-                const closingTagRegex = new RegExp(`^(<\\/${tagName}>(?:.*?)(?=(?:<\\/${tagName})|(?:<${tagName}))|(?:<\\/${tagName}>))`)
-                const unclosedTagExist = () => unclosed !== 0
-                
-                if(!unclosedTagExist()){
-                    // finish recursion
-                    return tagStr
-                } else {
-                    unclosed = (unclosed === undefined) ? 0 : unclosed
-                    // 1. accumulate opening tags
-                    let openMatch = text.match(openingTagRegex)
-                    if(openMatch !== null && openMatch[0] !== undefined){
-                        // no need to accumulate if the tag is a selfclosing tag 
-                        if(openMatch[2] === "/>"){
-                            if(!unclosedTagExist()){
-                                return openMatch[0]
-                            } else {
-                                return tagStr + createTagGroupString(text.substr(openMatch[0].length), tagName, openMatch[0], unclosed)
-                            }
-                        } 
-                        else {
-                            return tagStr + createTagGroupString(text.substr(openMatch[0].length), tagName, openMatch[0], ++unclosed)
-                        }
-                    }
-                    
-                    // 2. accumulate closing tags
-                    let closeMatch = text.match(closingTagRegex)
-                    if(closeMatch !== null && closeMatch[0] !== undefined){
-                        return tagStr + createTagGroupString(text.substr(closeMatch[0].length), tagName, closeMatch[0], --unclosed)
-                    }
-                }
-    
-            }
-        }
-            
-        // this.tagGroups = createTagGroupStrings_iterative(this.text)
-        this.tagGroups = createTagGroupStrings_recoursive(this.text)
+        this.tagGroups = createTagGroupStrings(this.text)
         const hasMultipleTagGroups = (this.tagGroups.length > 1)
         const hasSingleTagGroup = (this.tagGroups.length === 1)
+
         
-        // console.log(this.tagGroups)
-        // console.log(hasMultipleTagGroups)
-        // console.log(hasSingleTagGroup)
-
-
-
         // AUSGEBLENDET BIS TAG GROUPS STAGE 1 FIT IST
 
         // // handle options
@@ -705,7 +526,7 @@ function getQueryType(query: String | Node){
 
 /**
  * The iterate function gets a node and a callback function... 
- * It starts iterating the dom from the node, recoursively executing the callback.
+ * It starts iterating the dom from the node, recursively executing the callback.
  * If the callback function itself does not call 'return', the iterate function
  * will return false after executing the recursion.
  */
