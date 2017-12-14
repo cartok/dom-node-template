@@ -31,15 +31,24 @@ export default class NodeTemplate {
      * @param {any} options lost info by merging...
      */
     constructor(tagText: String, options: Object) {
-        if(typeof tagText !== "string"){
-            throw new Error("you need to provide a xml string as first parameter.")
-        }
+        
+        // handle options
+        // ------------------------------------------------------------------------------------------
+        /*
+            // typechecks
+            if(typeof tagText !== "string"){
+                throw new Error("you need to provide a xml string as first parameter.")
+            }
 
-        // @feature: remove comments
-        // clean the input string and transform it to a clean one-line string
-        this.text = cleanInputString(tagText)
-
+            // merge default options
+            options = Object.assign({}, DEFAULT_OPTIONS, options)
+            let { } = options
+        */
+        // ------------------------------------------------------------------------------------------
+        
+        
         // get all tag-groups
+        // ------------------------------------------------------------------------------------------
         /**
          * SVGs can't just be parsed in the same way as HTML. 
          * If it is not done the right way, they would not be displayed.
@@ -50,43 +59,106 @@ export default class NodeTemplate {
          * They need to get separated before being parsed, cause the 'DOMParser'
          * cannot parse multipla SVG tag groups at once, as with HTML, where it doesn't matter. 
          */
+        // @add-feature: remove comments
+        // @add-option: remove comments
+        // clean the input string and transform it to a clean one-line string
+        this.text = cleanInputString(tagText)
         this.tagGroups = createTagGroupStrings(this.text)
         that.hasMultipleTagGroups.set(this, this.tagGroups.length > 1)
         that.hasSingleTagGroup.set(this, this.tagGroups.length === 1)
-
-        // NEW HTML / SVG DETECTION
         // ------------------------------------------------------------------------------------------
-        /*
-            The input string is now split in tag groups.
 
+        /*
+            <svg>
+                <forge
+            </svg>
+
+        */
+
+        /*
+            svg rules
 
 
         */
-        // MUTUAL TAG NAMES
-        // const MUTUAL_TAG_NAMES = TAG_NAMES_HTML.filter(n => TAG_NAMES_SVG.find(m => m === n) === undefined ? false : true)
-        // console.log(MUTUAL_TAG_NAMES)
-        
-        // MUTUAL ATTRIBUTES
-        // console.log(Array.isArray(ATTRIBUTES_HTML))
-        // const MUTUAL_ATTRIBUTES = ATTRIBUTES_HTML.filter(n => ATTRIBUTES_SVG.find(m => m === n) === undefined ? false : true)
+
+        /*
+            html rules
+
+
+        */
+
+        // type detection
+        // ------------------------------------------------------------------------------------------
+        /**
+         * The input tag string is now split into tag groups.
+         * But further splitting could be needed.
+         * --------------------------------------------------------
+         * Type detection
+         * General idea: Distinguish between HTML and SVG by looking at the tag name.
+         * Some tag names in HTML and SVG are mutual. They exist in both.
+         * => In this case one could read the attribute names of the tag,
+         * => and lookup if there are any attributes that only exist either in HTML or in SVG
+         * => to be able to set a type.
+         * 
+         */
+        const MUTUAL_TAG_NAMES = TAG_NAMES_HTML.filter(n => TAG_NAMES_SVG.find(m => m === n) !== undefined)
+        // const MUTUAL_ATTRIBUTES = ATTRIBUTES_HTML.filter(n => ATTRIBUTES_SVG.find(m => m === n) !==)
+        console.log("mutual tag names:", MUTUAL_TAG_NAMES)
         // console.log(MUTUAL_ATTRIBUTES)
+        
 
         // TEST: tag name length vs attribute length
-        console.log(TAG_NAMES_HTML.length)
-        console.log(Object.keys(ATTRIBUTES_HTML).length)
-        console.log(TAG_NAMES_SVG.length)
-        console.log(Object.keys(ATTRIBUTES_SVG).length)
-        // ------------------------------------------------------------------------------------------
-        
+        // console.log(TAG_NAMES_HTML.length)
+        // console.log(Object.keys(ATTRIBUTES_HTML).length)
+        // console.log(TAG_NAMES_SVG.length)
+        // console.log(Object.keys(ATTRIBUTES_SVG).length)
+        // RESULT: not all elements got specific attributes
+        // QUESTION: what about generic attributes? 
+        // QUESTION: are there generic attributes that are equal?
+        // QUESTION: are there generic attributes that differ?
 
-        // handle options
-        // ------------------------------------------------------------------------------------------
-        /*
-            // - merge default options with options
-            // - destructure options
-            options = Object.assign({}, DEFAULT_OPTIONS, options)
-            let { } = options
-        */
+        // TEST:
+        const MUTUAL_TAGS_WITH_HTML_ATTRIBUTES = Object.keys(ATTRIBUTES_HTML)
+            .filter(tagName => MUTUAL_TAG_NAMES.find(x => x === tagName) !== undefined)
+        const MUTUAL_TAGS_WITH_SVG_ATTRIBUTES = Object.keys(ATTRIBUTES_SVG)
+            .filter(tagName => MUTUAL_TAG_NAMES.find(x => x === tagName) !== undefined)
+        // console.log("attributes of mutual tags:")
+        // console.log("HTML attributes:", MUTUAL_TAGS_WITH_HTML_ATTRIBUTES)
+        // console.log("SVG attributes:", MUTUAL_TAGS_WITH_SVG_ATTRIBUTES)
+        
+        // Object.keys(ATTRIBUTES_HTML).forEach(key => {
+        //     console.log("key:", key)
+        //     console.log(MUTUAL_TAG_NAMES.find(x => x === key))
+        // })
+        MUTUAL_TAG_NAMES.forEach(x => {
+            console.log("-----------------------------------------------")
+            console.log("mutual tag name:", x)
+            console.log("-----------------------------------------------")
+            const foundHTML = Object.keys(ATTRIBUTES_HTML).find(key => key === x)
+            console.log("foundHTML html attribute:", foundHTML)
+            const foundSVG = Object.keys(ATTRIBUTES_SVG).find(key => key === x)
+            console.log("foundHTML html attribute:", foundHTML)
+            if(foundHTML !== undefined){
+                console.log(`HTML attribtues of ${x}:`, ATTRIBUTES_HTML[foundHTML])
+            }
+            if(foundSVG !== undefined){
+                console.log(`SVG attribtues of ${x}:`, ATTRIBUTES_HTML[foundSVG])
+            }
+            if(foundHTML !== undefined && foundSVG !== undefined){
+                console.log(`found both, HTML and SVG attributes for ${x}`)
+                // console.log(ATTRIBUTES_HTML[foundHTML].forE)
+            }
+        })
+
+        const MUTUAL_TAGS_GOT_NO_ATTRIBUTES = MUTUAL_TAG_NAMES.filter(x => {
+            return MUTUAL_TAGS_WITH_HTML_ATTRIBUTES.find(y => y === x) !== undefined
+            || MUTUAL_TAGS_WITH_SVG_ATTRIBUTES.find(y => y === x) !== undefined
+        })
+        // console.log("mutual tags that got no attributes:", MUTUAL_TAGS_GOT_NO_ATTRIBUTES)
+
+
+        // console.log("every attribute in data can be mapped to a tag name:", Object.keys(ATTRIBUTES_HTML).every(a => TAG_NAMES_HTML.find(b => b === a)))
+
         // ------------------------------------------------------------------------------------------
         
 
