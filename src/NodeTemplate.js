@@ -40,6 +40,16 @@ export default class NodeTemplate {
         this.text = cleanInputString(tagText)
 
         // get all tag-groups
+        /**
+         * SVGs can't just be parsed in the same way as HTML. 
+         * If it is not done the right way, they would not be displayed.
+         * SVGs must be parsed with the "image/svg+xml" option by the 'DOMParser'.
+         * They also need to have a proper xmlns attribute set, before they get parsed.
+         *  
+         * If the text contains multiple SVG tag groups (or HTML and multiple SVG tag groups),
+         * They need to get separated before being parsed, cause the 'DOMParser'
+         * cannot parse multipla SVG tag groups at once, as with HTML, where it doesn't matter. 
+         */
         this.tagGroups = createTagGroupStrings(this.text)
         that.hasMultipleTagGroups.set(this, this.tagGroups.length > 1)
         that.hasSingleTagGroup.set(this, this.tagGroups.length === 1)
@@ -48,7 +58,7 @@ export default class NodeTemplate {
         // ------------------------------------------------------------------------------------------
         /*
             The input string is now split in tag groups.
-                
+
 
 
         */
