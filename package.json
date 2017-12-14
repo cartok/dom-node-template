@@ -21,13 +21,14 @@
     "clean:dir": "rm -rf ./build && mkdir build && npm run --silent sound:trash",
     "babelrc:build": "cp ./.babelrc.build ./.babelrc",
     "babelrc:mocha": "cp ./.babelrc.mocha ./.babelrc",
-    "mocha": "npm run --silent babelrc:mocha && ./node_modules/.bin/mocha --compilers js:babel-core/register --require jsdom-global/register",
-    "babel": "./node_modules/.bin/babel --out-dir ./build ./src",
+    "babel": "babel --out-dir ./build ./src",
     "--------------------------------------------------------------------------------------------------------------------------------------------": "",
     "build": "clear; npm run --silent clean:dir && npm run --silent babelrc:build && npm run --silent babel && npm run --silent sound:microwave",
-    "test": "clear; npm run --silent babelrc:mocha && npm run --silent babel && npm run --silent mocha && npm run --silent sound:plock",
+    "test": "clear; npm run --silent babelrc:mocha && npm run --silent babel && mocha --compilers js:babel-core/register --require jsdom-global/register --",
     "test:monitor": "nodemon -x \"npm run --silent test\"",
-    "prepublishOnly": "npm run --silent test && npm run --silent build"
+    "test:all": "clear; npm run --silent babelrc:mocha && npm run --silent babel && mocha --compilers js:babel-core/register --require jsdom-global/register && npm run --silent sound:plock",
+    "test:all:monitor": "nodemon -x \"npm run --silent test:all\"",
+    "prepublishOnly": "npm run --silent test:all && npm run --silent build"
   },
   "repository": {
     "type": "git",
