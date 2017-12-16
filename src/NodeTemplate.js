@@ -61,7 +61,7 @@ export default class NodeTemplate {
          */
         // @add-feature: remove comments
         // @add-option: remove comments
-        // clean the input string and transform it to a clean one-line string
+        // clean the input string and transform it into a clean one-line string
         this.text = cleanInputString(tagText)
         this.tagGroups = createTagGroupStrings(this.text)
         that.hasMultipleTagGroups.set(this, this.tagGroups.length > 1)
@@ -69,95 +69,173 @@ export default class NodeTemplate {
         // ------------------------------------------------------------------------------------------
 
         /*
-            <svg>
-                <forge
+            CSS positioning properties (e.g. top and margin) have no effect 
+            when positioning the embedded content element in the SVG coordinate
+            system. They can, however, be used to position child elements of
+            a ‘foreignObject’ or HTML embedding element. 
+
+            FOREIGN OBJECT RESEARCH RESULTS:
+            @parsing:   - foreignObject html tags do not need a body element
+            @parsing:   - foreignObject html tags can just be parsed as "image/svg+xml" !!!!!
+            @xmlns:     - foreignObject html tag groups need html namespace !!!!!
+            @xmlns:     - svg tag groups in an foreignObject, do not need a xmlns attribute
+            @xmlns:     - svg tags in a html tag group in an foreignObject, need a xmlns attribute !!!!!
+            @mutual:    - if foreignObject has a tag group with mututal tag name
+                        => parse it as "text/html" with html namespace !!!!!
+
+            TEST CODE:
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <foreignObject x="0" y="0" width="100" height="100">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;">
+                        <div style="width:100px; height:100px; background-color:blue; position: absolute;">
+                            <div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div>
+                        </div>
+                    </div>
+                </foreignObject>
+            </svg>
+
+            1. `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><foreignObject x="0" y="0" width="100" height="100"><div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;"><div style="width:100px; height:100px; background-color:blue; position: absolute;"><div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div></div></div></foreignObject></svg>`
+                var p = new DOMParser()
+                var svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><foreignObject x="0" y="0" width="100" height="100"><div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;"><div style="width:100px; height:100px; background-color:blue; position: absolute;"><div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div></div></div></foreignObject></svg>`
+                var svgParsed = p.parseFromString(svg, "image/svg+xml").documentElement
+                document.body.appendChild(svgParsed)
+    
+            2.1 `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;"><div style="width:100px; height:100px; background-color:blue; position: absolute;"><div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div></div></div>`
+            2.2 `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><foreignObject x="0" y="0" width="100" height="100"></foreignObject></svg>`
+                var p = new DOMParser()
+                var svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><foreignObject x="0" y="0" width="100" height="100"></foreignObject></svg>`
+                var html = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;"><div style="width:100px; height:100px; background-color:blue; position: absolute;"><div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div></div></div>`
+                var svgParsed = p.parseFromString(svg, "image/svg+xml").documentElement
+                var htmlParsed = p.parseFromString(html, "text/html").body.firstElementChild
+                document.body.appendChild(svgParsed)
+                svgParsed.firstChild.appendChild(htmlParsed)
+            
+
+            <svg xmlns="http://www.w3.org/2000/svg">
+                <foreignObject>
+                    <div xmlns="http://www.w3.org/1999/xhtml"></div>
+                    <div xmlns="http://www.w3.org/1999/xhtml"></div>
+                </foreignObject>
+            </svg>
+
+
+            <svg xmlns="http://www.w3.org/2000/svg">
+                <foreignObject>
+                    <div xmlns="http://www.w3.org/1999/xhtml"></div>
+                    <svg></svg>
+                </foreignObject>
+            </svg>
+
+
+            <svg xmlns="http://www.w3.org/2000/svg">
+                <foreignObject>
+                    <div xmlns="http://www.w3.org/1999/xhtml">
+                        <svg xmlns="http://www.w3.org/2000/svg"></svg>
+                    </div>
+                </foreignObject>
+            </svg>
+
+            <svg xmlns="http://www.w3.org/2000/svg">
+                <foreignObject>
+                    <div xmlns="http://www.w3.org/1999/xhtml">
+                        <svg xmlns="http://www.w3.org/2000/svg">
+                            <foreignObject>
+                                <div xmlns="http://www.w3.org/1999/xhtml">
+                                    <svg xmlns="http://www.w3.org/2000/svg">
+                                        <foreignObject>
+                                            <div xmlns="http://www.w3.org/1999/xhtml">
+                                                <svg xmlns="http://www.w3.org/2000/svg">
+                                                    <foreignObject>
+                                                        <div xmlns="http://www.w3.org/1999/xhtml">
+                                                            <svg xmlns="http://www.w3.org/2000/svg"></svg>
+                                                        </div>
+                                                    </foreignObject>
+                                                </svg>
+                                            </div>
+                                        </foreignObject>
+                                    </svg>
+                                </div>
+                            </foreignObject>
+                        </svg>
+                    </div>
+                </foreignObject>
             </svg>
 
         */
 
-        /*
-            svg rules
 
-
-        */
-
-        /*
-            html rules
-
-
-        */
-
-        // type detection
+        // tag group type detection
         // ------------------------------------------------------------------------------------------
         /**
+         * Further splitting:
+         * ----------------------------------------------------------------------------------------------------
          * The input tag string is now split into tag groups.
          * But further splitting could be needed.
-         * --------------------------------------------------------
-         * Type detection
-         * General idea: Distinguish between HTML and SVG by looking at the tag name.
-         * Some tag names in HTML and SVG are mutual. They exist in both.
-         * => In this case one could read the attribute names of the tag,
-         * => and lookup if there are any attributes that only exist either in HTML or in SVG
-         * => to be able to set a type.
          * 
+         * Type detection:
+         * ----------------------------------------------------------------------------------------------------
+         * General idea: Distinguish between HTML and SVG by looking at the tag name.
+         * Some tag names in HTML and SVG are mutual. They "exist in both".
+         * For example the <a> Element exists in HTML and SVG, but in SVG it implements SVG interfaces aswell.
+         * ====================================================================================================
+         * Mutual tag names:
+         * Distinguish between HTML and SVG and always provide a XMLNS-Attribute.
+         * ====================================================================================================
+         * 'audio'
+         * 'canvas'
+         * 'iframe'
+         * 'video'
+         * - HTML Embedded content 
+         * => type: html
+         * => xmlns: true
+         * ----------------------------------------------------------------------------------------------------
+         * 'a'
+         * - if <a> is a tag group, warn the user that 'NodeTemplate' assumes it to be in the html namespace. 
+         * => type: html
+         * => xmlns: true
+         * ----------------------------------------------------------------------------------------------------
+         * 'font'
+         * - mdn says the font element is deprecated, at least for html.
+         * => type: svg
+         * => xmlns: true
+         * ----------------------------------------------------------------------------------------------------
+         * 'title'
+         * - the html title element is located in the head element, thus there will be no need to parse it as html.
+         * => type: svg
+         * => xmlns: true
+         * ----------------------------------------------------------------------------------------------------
+         * 'script'
+         * 'style'
+         * - Caution if a tag group is a <script> or <style> Element!
+         * - It should be parsed as HTML!
+         * - It does not need a xmlns attribute!
+         * - It will be found under doc.head.firstChild!
+         * => type: script|style
+         * => xmlns: false
+         */
+        /**
+            var p = new DOMParser()
+            var svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect x="0" y="0" width="100" height="100"/></svg>`
+            var html = `<style>rect { fill:red }</style>`
+            var svgParsed = p.parseFromString(svg, "image/svg+xml").documentElement
+            var htmlParsed = p.parseFromString(html, "text/html").head.firstChild      
+            var fragment = document.createDocumentFragment()
+			fragment.appendChild(htmlParsed)
+			fragment.appendChild(svgParsed)
+			document.body.appendChild(fragment)
+         */
+        /**
+         * ====================================================================================================
          */
         const MUTUAL_TAG_NAMES = TAG_NAMES_HTML.filter(n => TAG_NAMES_SVG.find(m => m === n) !== undefined)
-        // const MUTUAL_ATTRIBUTES = ATTRIBUTES_HTML.filter(n => ATTRIBUTES_SVG.find(m => m === n) !==)
+        const VALUES_TO_REMOVE = [ "svg", "image", "style", "script" ]
+        VALUES_TO_REMOVE.forEach(x => {
+            const found = MUTUAL_TAG_NAMES.findIndex(y => x === y)
+            MUTUAL_TAG_NAMES.splice(found, 1)
+        })
         console.log("mutual tag names:", MUTUAL_TAG_NAMES)
-        // console.log(MUTUAL_ATTRIBUTES)
         
 
-        // TEST: tag name length vs attribute length
-        // console.log(TAG_NAMES_HTML.length)
-        // console.log(Object.keys(ATTRIBUTES_HTML).length)
-        // console.log(TAG_NAMES_SVG.length)
-        // console.log(Object.keys(ATTRIBUTES_SVG).length)
-        // RESULT: not all elements got specific attributes
-        // QUESTION: what about generic attributes? 
-        // QUESTION: are there generic attributes that are equal?
-        // QUESTION: are there generic attributes that differ?
-
-        // TEST:
-        const MUTUAL_TAGS_WITH_HTML_ATTRIBUTES = Object.keys(ATTRIBUTES_HTML)
-            .filter(tagName => MUTUAL_TAG_NAMES.find(x => x === tagName) !== undefined)
-        const MUTUAL_TAGS_WITH_SVG_ATTRIBUTES = Object.keys(ATTRIBUTES_SVG)
-            .filter(tagName => MUTUAL_TAG_NAMES.find(x => x === tagName) !== undefined)
-        // console.log("attributes of mutual tags:")
-        // console.log("HTML attributes:", MUTUAL_TAGS_WITH_HTML_ATTRIBUTES)
-        // console.log("SVG attributes:", MUTUAL_TAGS_WITH_SVG_ATTRIBUTES)
-        
-        // Object.keys(ATTRIBUTES_HTML).forEach(key => {
-        //     console.log("key:", key)
-        //     console.log(MUTUAL_TAG_NAMES.find(x => x === key))
-        // })
-        MUTUAL_TAG_NAMES.forEach(x => {
-            console.log("-----------------------------------------------")
-            console.log("mutual tag name:", x)
-            console.log("-----------------------------------------------")
-            const foundHTML = Object.keys(ATTRIBUTES_HTML).find(key => key === x)
-            console.log("foundHTML html attribute:", foundHTML)
-            const foundSVG = Object.keys(ATTRIBUTES_SVG).find(key => key === x)
-            console.log("foundHTML html attribute:", foundHTML)
-            if(foundHTML !== undefined){
-                console.log(`HTML attribtues of ${x}:`, ATTRIBUTES_HTML[foundHTML])
-            }
-            if(foundSVG !== undefined){
-                console.log(`SVG attribtues of ${x}:`, ATTRIBUTES_HTML[foundSVG])
-            }
-            if(foundHTML !== undefined && foundSVG !== undefined){
-                console.log(`found both, HTML and SVG attributes for ${x}`)
-                // console.log(ATTRIBUTES_HTML[foundHTML].forE)
-            }
-        })
-
-        const MUTUAL_TAGS_GOT_NO_ATTRIBUTES = MUTUAL_TAG_NAMES.filter(x => {
-            return MUTUAL_TAGS_WITH_HTML_ATTRIBUTES.find(y => y === x) !== undefined
-            || MUTUAL_TAGS_WITH_SVG_ATTRIBUTES.find(y => y === x) !== undefined
-        })
-        // console.log("mutual tags that got no attributes:", MUTUAL_TAGS_GOT_NO_ATTRIBUTES)
-
-
-        // console.log("every attribute in data can be mapped to a tag name:", Object.keys(ATTRIBUTES_HTML).every(a => TAG_NAMES_HTML.find(b => b === a)))
 
         // ------------------------------------------------------------------------------------------
         
