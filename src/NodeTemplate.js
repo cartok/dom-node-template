@@ -1,7 +1,12 @@
 import TAG_NAMES_HTML from "html-tag-names"
 import TAG_NAMES_SVG from "svg-tag-names"
-import ATTRIBUTES_HTML from "html-element-attributes"
-import ATTRIBUTES_SVG from "svg-element-attributes"
+
+const MUTUAL_TAG_NAMES = TAG_NAMES_HTML.filter(n => TAG_NAMES_SVG.find(m => m === n) !== undefined)
+const VALUES_TO_REMOVE = [ "svg", "image", "style", "script" ]
+VALUES_TO_REMOVE.forEach(x => {
+    const found = MUTUAL_TAG_NAMES.findIndex(y => x === y)
+    MUTUAL_TAG_NAMES.splice(found, 1)
+})
 
 const DEFAULT_OPTIONS = {}
 
@@ -27,23 +32,21 @@ const that = {
 export default class NodeTemplate {
     /**
      * 
-     * @param {String} text lost info by merging...
-     * @param {any} options lost info by merging...
+     * @param {String}
+     * @param {any}
      */
     constructor(tagText: String, options: Object) {
         
         // handle options
         // ------------------------------------------------------------------------------------------
-        /*
-            // typechecks
-            if(typeof tagText !== "string"){
-                throw new Error("you need to provide a xml string as first parameter.")
-            }
+        // typechecks
+        if(typeof tagText !== "string"){
+            throw new Error("you need to provide a xml string as first parameter.")
+        }
 
-            // merge default options
-            options = Object.assign({}, DEFAULT_OPTIONS, options)
-            let { } = options
-        */
+        // merge default options
+        options = Object.assign({}, DEFAULT_OPTIONS, options)
+        let { svg } = options
         // ------------------------------------------------------------------------------------------
         
         
@@ -59,9 +62,6 @@ export default class NodeTemplate {
          * They need to get separated before being parsed, cause the 'DOMParser'
          * cannot parse multipla SVG tag groups at once, as with HTML, where it doesn't matter. 
          */
-        // @add-feature: remove comments
-        // @add-option: remove comments
-        // clean the input string and transform it into a clean one-line string
         this.text = cleanInputString(tagText)
         this.tagGroups = createTagGroupStrings(this.text)
         that.hasMultipleTagGroups.set(this, this.tagGroups.length > 1)
@@ -75,13 +75,13 @@ export default class NodeTemplate {
             a ‘foreignObject’ or HTML embedding element. 
 
             FOREIGN OBJECT RESEARCH RESULTS:
+            @xmlns:     - foreignObject html tag groups need html namespace !!!!!
             @parsing:   - foreignObject html tags do not need a body element
             @parsing:   - foreignObject html tags can just be parsed as "image/svg+xml" !!!!!
-            @xmlns:     - foreignObject html tag groups need html namespace !!!!!
             @xmlns:     - svg tag groups in an foreignObject, do not need a xmlns attribute
             @xmlns:     - svg tags in a html tag group in an foreignObject, need a xmlns attribute !!!!!
             @mutual:    - if foreignObject has a tag group with mututal tag name
-                        => parse it as "text/html" with html namespace !!!!!
+                        => see "type detection"
 
             TEST CODE:
             <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
@@ -167,11 +167,6 @@ export default class NodeTemplate {
         // tag group type detection
         // ------------------------------------------------------------------------------------------
         /**
-         * Further splitting:
-         * ----------------------------------------------------------------------------------------------------
-         * The input tag string is now split into tag groups.
-         * But further splitting could be needed.
-         * 
          * Type detection:
          * ----------------------------------------------------------------------------------------------------
          * General idea: Distinguish between HTML and SVG by looking at the tag name.
@@ -227,107 +222,125 @@ export default class NodeTemplate {
         /**
          * ====================================================================================================
          */
-        const MUTUAL_TAG_NAMES = TAG_NAMES_HTML.filter(n => TAG_NAMES_SVG.find(m => m === n) !== undefined)
-        const VALUES_TO_REMOVE = [ "svg", "image", "style", "script" ]
-        VALUES_TO_REMOVE.forEach(x => {
-            const found = MUTUAL_TAG_NAMES.findIndex(y => x === y)
-            MUTUAL_TAG_NAMES.splice(found, 1)
+
+        // advance tag group information and parse:
+        this.fragment = window.document.createDocumentFragment()
+        this.tagGroups.forEach(tagGroup => {
+            let tagName = getFirstTagName(tagGroup)
+            tagName = tagName.toLocaleLowerCase()
+            const isMutual = MUTUAL_TAG_NAMES.includes(tagName)
+            const isSvg = !isMutual && TAG_NAMES_SVG.includes(tagName)
+            const isHtml = !isMutual && TAG_NAMES_HTML.includes(tagName)
+            if(isMutual){
+                switch(tagName){
+                    case "script":
+                    case "style":
+                    
+                    // no xmlns
+                    // parse as "text/html"
+                    break
+                    case "title":
+                    case "font":
+
+                    // svg xmlns
+                    // parse as "image/svg+xml"
+                    break
+                    case "audio":
+                    case "canvas":
+                    case "iframe":
+                    case "video":
+                    
+                    // html xmlns
+                    // parse as "text/html"
+                    break
+                    case "a":
+                    
+                    // html xmlns
+                    // warn that html is forced, option parameter needed to parse it as svg.
+                    break
+                }
+            } 
+            else if(isSvg){
+                // get all foreignObjects
+                const foreignObjects = [{
+                    fo: "",
+                    tagGroups: [{}],
+                }]
+                const hasForeignObject = /<foreignObject/.test(tagGroup)
+                const hasMultipleForeignObjects = (() => {
+                    if(hasForeignObject){
+                        let matches = this.text.match(/<foreignObject[^>]*>/g)
+                        return (matches !== null) ? (matches.length > 1) : false
+                    } else {
+                        return false
+                    }
+                })()
+                if(hasForeignObject && !hasMultipleForeignObjects){
+                     // ...
+                }
+
+            } 
+            else if(isHtml){
+                // get all svgs
+                const svgs = undefined
+                const hasSvg = /<svg/.test(this.text)
+                const hasMultipleSvgs = (() => {
+                    if(hasSvg){
+                        let matches = this.text.match(/<svg[^>]*>/g)
+                        return (matches !== null) ? (matches.length > 1) : false
+                    } else {
+                        return false
+                    }
+                })()
+                // if its html with svg
+                // - add placeholder <div id="svg-X"></div> tag before the svgs
+                // - and cut out the whole svg to array (the text will have placeholders with ids instead of svgs)
+                // PROBLEM IF THE SVG IS INSIDE FOREIGN OBJECT.
+                // => go one by one. save to array, call 'analyzeSVG()' function each time
+                // => this function handles foreign object and calls itself if svgs are embedded in html in a foreign object etc.
+                //
+                // =>  
+                if(hasSvg) {
+                    var ph = -1
+                    const placeHolderIdText = "nodetemplate-svg-placeholder-"
+                    const textWithPlaceholders = this.text.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, match =>{
+                        ph += 1 // starts with zero
+                        return `<div id="${placeHolderIdText}${ph}"></div>${match}`
+                    })
+                    const textWithoutSvgTagGroups = textWithPlaceholders.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, ``)
+                    const svgTagGroups = this.text.match(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g)
+                    if(svgTagGroups === null || svgTagGroups.length < 1){
+                        throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
+                    }
+                    /* dont parse yet
+                    const doc = parser.parseFromString(textWithoutSvgTagGroups, "text/html")
+                    Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n))
+                    svgTagGroups.map(g => parser.parseFromString(g, "image/svg+xml")).forEach((d, ph) => {
+                        // QUERY SELECTOR ON FRAGMENT VS GETELEMENTBYID ON DOCUMENT?!
+                        const placeHolderNode = this.fragment.querySelector(`#${placeHolderIdText}${ph}`)
+                        placeHolderNode
+                            .parentNode
+                            .insertBefore(d.documentElement, placeHolderNode)
+                        placeHolderNode
+                            .parentNode
+                            .removeChild(placeHolderNode)
+                    })
+                    */
+                }
+                // if it's just html
+                // no need to separate the tag-groups if its "text/html".
+                else {
+
+                    // this.fragment = createDocumentFragment(this.text)
+                } 
+            }
+            
         })
-        console.log("mutual tag names:", MUTUAL_TAG_NAMES)
-        
 
 
         // ------------------------------------------------------------------------------------------
         
 
-        // analyze tag groups
-        // ------------------------------------------------------------------------------------------
-        /*
-            // @improvement/accuracy: add distinction algorithm using npm packages "svg-tag-names" etc.
-            // @outdated-text: if options.isSvg is not given and options.htmlWithSvg is true:
-            // @outdated-text: - find out if the 'tagText' it is SVG anyways.
-            // @outdated-text: - assumption: the 'tagText' is SVG if the 'nodeName' of the first tag is "svg".
-            if(isSvg === undefined){
-                if(hasMultipleTagGroups){
-                    const allTagGroupsAreSvg = tagGroups.every(tg => /^<svg/.test(tg) === true)
-                    if(allTagGroupsAreSvg){
-                        isSvg = true
-                        svgDetected = true
-                    } else {
-                        console.warn("the text has more than one tag-group, not all are starting with a svg-tag. the text will be parsed as html with svg if it contains any svg-tag (literally '<svg>' can't detect more by now).")
-                        isSvg = false
-                    }
-                }
-                else if(hasSingleTagGroup) {
-                    if(nodeNameFirstTag === "svg"){
-                        isSvg = true
-                        svgDetected = true
-                    } else {
-                        isSvg = false
-                    }
-                }
-            }
-            // console.log("isSvg:", isSvg)
-            // console.log("nodeNameFirstTag:", nodeNameFirstTag)
-            // console.log("hasMultipleTagGroups:", hasMultipleTagGroups)
-            // console.log("hasSingleTagGroup:", hasSingleTagGroup)
-            // console.log("svgDetected:", svgDetected)
-                    // check if text has <svg>
-            // > depends on 'isSvg'
-            if(htmlWithSvg === undefined){
-                if(!isSvg){
-                    htmlWithSvg = /<svg/.test(this.text)
-                } else {
-                    htmlWithSvg = false
-                }
-            }
-        */
-        // ------------------------------------------------------------------------------------------
-        
-
-        // add additional attributes
-        // ------------------------------------------------------------------------------------------
-        /*
-            // // check if a <svg> exist
-            // const hasSvg = (() => {
-            //     return /<svg/.test(this.text)
-            // })()
-
-            // // check if multiple <svg> exist
-            // const hasMultipleSvgs = (() => {
-            //     if(hasSvg){
-            //         let matches = this.text.match(/<svg[^>]*>/g)
-            //         return (matches !== null) ? (matches.length > 1) : false
-            //     } else {
-            //         return false
-            //     }
-            // })()
-
-            // // if <svg> tag(s) exists 
-            // // - find out if a <foreignObject> tag exist
-            // // @todo: only if?
-            // const hasForeignObject = (() => {
-            //     if(hasSvg || hasMultipleSvgs){
-            //         return /<foreignObject/.test(this.text)
-            //     } else {
-            //         return false
-            //     }
-            // })()
-
-            // // if <foreignObject> tag exists 
-            // // - find out if multiple <foreignObject> tags existtagText
-            // const hasMultipleForeignObjects = (() => {
-            //     if(hasForeignObject){
-            //         let matches = this.text.match(/<foreignObject[^>]*>/g)
-            //         return (matches !== null) ? (matches.length > 1) : false
-            //     } else {
-            //         return false
-            //     }
-            // })()
-        */
-        // ------------------------------------------------------------------------------------------
-
-        
         // namespace handling
         // ------------------------------------------------------------------------------------------
         /*
@@ -456,34 +469,6 @@ export default class NodeTemplate {
             })()
         */
         // ------------------------------------------------------------------------------------------
-        
-
-        // add info text
-        // ------------------------------------------------------------------------------------------
-        /*
-            const createInfoText = (() => {
-                // Result idea:
-                // 'It\'s a HTML Fragment with a unifying root element containing just one <svg> tag without a <foreignObject> tag. without a <svg> tag without  a <foreignObject> tag.'
-                // 'It\'s a SVG Fragment with a unifying root element containing just one <svg> tag without a <foreignObject> tag. without a <svg> tag without  a <foreignObject> tag.'
-
-                // add type info text
-                this.info = "It's a"
-                + `${  !isSvg ?                                                             " HTML Fragment"                    :   " SVG Fragment"  }`
-                + `${  this.fragment.childElementCount > 1 ?                                " without a unifying root element"  :   " with a unifying root element"  }`
-
-                + `${  isSvg && hasMultipleSvgs ?                                           " containing multiple <svg> tags"   :   " containing just one <svg> tag"  }`
-                + `${  isSvg && hasForeignObject ?                                          " with"                             :   " without"  }`
-                + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " multiple"                         :   " a"  }`
-                + `${  isSvg && hasForeignObject && hasMultipleForeignObjects ?             " <foreignObject> tags."            :   " <foreignObject> tag."  }`
-
-                + `${  !isSvg && htmlWithSvg ?                                                   " containing"                       :   " without"  }` 
-                + `${  !isSvg && htmlWithSvg && !hasMultipleSvgs ?                               " multiple <svg> tags"              :   " a <svg> tag"  }` 
-                + `${  !isSvg && htmlWithSvg && hasForeignObject ?                               " with"                             :   " without"  } `
-                + `${  !isSvg && htmlWithSvg && hasForeignObject && hasMultipleForeignObjects ?  " multiple"                         :   " a"  }` 
-                + `${  !isSvg && htmlWithSvg && hasForeignObject && hasMultipleForeignObjects ?  " <foreignObject> tags."            :   " <foreignObject> tag."  }` 
-            })()
-        */
-        // ------------------------------------------------------------------------------------------
 
 
         // create node references
@@ -595,7 +580,9 @@ export default class NodeTemplate {
 }
 
 
-
+// @todo: fix parenthesis spaces
+// @feature: replace "" in attribute-values (css)
+// @feature: remove comments
 function cleanInputString(html: String) {
     
     // remove all newlines, tabs and returns from the html string to create one line
@@ -661,21 +648,27 @@ function cleanInputString(html: String) {
     // console.log("cleaned html string:", html)
     return html
 }
+function getFirstTagName(tagText: String){
+    let matches = tagText.match(/^<([a-zA-Z\d]+)/)
+    return (matches !== null) ? matches[1] : undefined
+}
 function createTagGroupStrings(tagText: String){
     // outer context
     const tagGroups: Array<String> = []
 
     // execute tag group creation
     while(tagText.length > 0){
-        const firstTagName = (() => {
-            let matches = tagText.match(/^<([a-zA-Z\d]+)/)
-            return (matches !== null) ? matches[1] : undefined
-        })()
-        let tagGroupString = createTagGroupString(firstTagName, false)
-        if(tagGroupString !== undefined){
-            tagGroups.push(tagGroupString)
+        const firstTagName = getFirstTagName(tagText)
+        if(firstTagName !== undefined){
+
+            let tagGroupString = createTagGroupString(firstTagName, false)
+            if(tagGroupString !== undefined){
+                tagGroups.push(tagGroupString)
+            } else {
+                throw new Error("Function createTagGroupString() returned 'undefined'.")
+            }
         } else {
-            throw new Error("Function createTagGroupString() returned 'undefined'.")
+            throw new Error("First Tag Name was 'undefined'.")
         }
     }
 
