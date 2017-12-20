@@ -369,48 +369,48 @@ function cleanInputString_old(html) {
     IT ACTUALLY SEEMS TO WORK! BUT 10k steps ~10ms:
     REGEX: \s*(\<[\w\-\:]++)|\s*(\/?\>)|\s*(\ [a-zA-Z\-]++)\s*(=)\s*(?:(?:(\")\s*(?:(?<=\()\s++|\s++(?=[\(\)\,])|([\w\:\;\#\=\,\.\-\(\)\_\%\']++))?\s*(\"))?)?|(?:(")\s*(?:(?<=\()\s++|\s++(?=[\(\)\,])|([\w\:\;\#\=\,\.\-\(\)\_\%\']++)))|(?:\s*?(?:(?<=\()\s++|\s++(?=[\(\)\,])|(\ ?[\w\:\;\#\=\,\.\-\(\)\_\%\']++))\s*(\"))|(?:\s*?(?:(?<=\()\s++|\s++(?=[\(\)\,])|(\ ?[\w\:\;\#\=\,\.\-\(\)\_\%\']++)))
     TEXT: 
-<tag a b c d e f g>
-<tag id="1" class="yeah cool">
-<tag disabled  disabled=""/>
-<tag transform=
-    "translate(1,2)"
-/>
-<tag transform="
-        translate(1,2)
-"/>
-<tag class="single"/>
-<tag class="start end"/>
-<tag class="start mid mid mid end"/>
-<tag points="00 11 22"/>
-<tag transform="translate(1,2)"/>
-<tag transform="translate( 1, 2)"/>
-<tag transform="translate  (  1, 2   )"/>
-<tag transform="translate(-12deg)"/>
-<tag transform="translate(1,2) translate(1,2)"/>
-<tag transform="
-        translate(1,2)
-        translate(1,2)
-"/>
-<tag transform="
-        translate(1,2)
-"/>
-<tag transform="translate(   1,   
-            2)"/>
-<tag transform="translate(  1  ,  2  )
+    <tag a b c d e f g>
+    <tag id="1" class="yeah cool">
+    <tag disabled  disabled=""/>
+    <tag transform=
+        "translate(1,2)"
+    />
+    <tag transform="
+            translate(1,2)
+    "/>
+    <tag class="single"/>
+    <tag class="start end"/>
+    <tag class="start mid mid mid end"/>
+    <tag points="00 11 22"/>
+    <tag transform="translate(1,2)"/>
+    <tag transform="translate( 1, 2)"/>
+    <tag transform="translate  (  1, 2   )"/>
+    <tag transform="translate(-12deg)"/>
+    <tag transform="translate(1,2) translate(1,2)"/>
+    <tag transform="
+            translate(1,2)
+            translate(1,2)
+    "/>
+    <tag transform="
+            translate(1,2)
+    "/>
+    <tag transform="translate(   1,   
+                2)"/>
+    <tag transform="translate(  1  ,  2  )
                 translate (
                             3, 
                             4 
                 )
- translate(        1px     ,       0px        )
- rotate(-0deg)
- scale(0.5, 0.5)
- text-shadow: 1px 1px 2px black, 0 0 25px blue; color: rgba(200,
- 300 ,  2,  .18 )
- text-shadow: 0 0 3px #FF0000, 0 0 5px #0000FF;
- background: url('img.gif
- ') right bottom no-repeat, url('img.gif') left top repeat;
- background: linear-gradient(to bottom,    #1e5799   0%,
- #2989d8 50%, #207cca  51%, #7db9e8 100%)"/>
+    translate(        1px     ,       0px        )
+    rotate(-0deg)
+    scale(0.5, 0.5)
+    text-shadow: 1px 1px 2px black, 0 0 25px blue; color: rgba(200,
+    300 ,  2,  .18 )
+    text-shadow: 0 0 3px #FF0000, 0 0 5px #0000FF;
+    background: url('img.gif
+    ') right bottom no-repeat, url('img.gif') left top repeat;
+    background: linear-gradient(to bottom,    #1e5799   0%,
+    #2989d8 50%, #207cca  51%, #7db9e8 100%)"/>
  
 
     NOW FINISH BY ADDING CLOSING TAGS AND TEXT-NODES
