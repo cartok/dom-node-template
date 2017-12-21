@@ -64,8 +64,8 @@ export default class NodeTemplate {
          */
         this.text = cleanInputString(tagText)
         this.tagGroups = createTagGroupStrings(this.text)
-        that.hasMultipleTagGroups.set(this, this.tagGroups.length > 1)
-        that.hasSingleTagGroup.set(this, this.tagGroups.length === 1)
+        // that.hasMultipleTagGroups.set(this, this.tagGroups.length > 1)
+        // that.hasSingleTagGroup.set(this, this.tagGroups.length === 1)
         // ------------------------------------------------------------------------------------------
 
         /*
@@ -225,88 +225,95 @@ export default class NodeTemplate {
 
         // advance tag group information and parse:
         this.fragment = window.document.createDocumentFragment()
-        this.tagGroups.forEach(tagGroup => {
+        function handleTagGroup(tagGroup: String){
 
-            let tagName = getFirstTagName(tagGroup)
-            tagName = tagName.toLocaleLowerCase()
+        }
+        this.tagGroups = this.tagGroups.map(tagGroup => handleTagGroup(tagGroup))
+        function handleTagGroup(tagGroup: String, options: any){
+
+        }
+            let { type, addXMLNS } = options
 
             // 1. analyze type
-            let addXMLNS = true
-            let type = undefined
-            
-            if(tagName === "svg" || tagName === "g"){
-                type = "svg"
-            } else if(tagName === "div"){
-                type = "html"
-            } else if(tagName === "foreignObject"){
-                type = "fo"
-            } else {
-                if(MUTUAL_TAG_NAMES.includes(tagName)){
-                    switch(tagName){
-                        // I. CONCRETE CASES:
-                        // 1. Doesn't matter if it's handled as HTML or SVG, default: HTML.
-                        case "script":
-                        case "style":
-                            addXMLNS = false
-                            type = "html"
-                            break
-                        // 2. Embedded Content has to be HTML.
-                        case "audio":
-                        case "canvas":
-                        case "iframe":
-                        case "video":
-                            type = "html"
-                            break
-                        // II. INCONCRETE CASES:
-                        // 1. Mutual tags, overridable default: SVG 
-                        case "font":
-                        case "title":
-                            if(options.mutual.a.isHTML){
-                                type = "html"
-                            }
-                            else {
-                                type = "svg"
-                                if(tagName === "title"){
-                                    warnAbout("title")
-                                } else {
-                                    warnAbout("font")
-                                }
-                            }
-                            break
-                        // 2. Mutual tags, overridable default: HTML 
-                        case "a":
-                            if(options.mutual.a.isSVG){
-                                type = "svg"
-                            }
-                            else {
-                                type = "html"
-                                warnAbout("a")
-                            }
-                            break
-                    }
-                    function warnAbout(t: String){
-                        console.warn(`You provided an <${t}></${t}> tag as a tag-group (or root node, referring to the string input context).`)
-                        console.warn(`The <${t}></${t}> tag exists in HTML and SVG namespace.`)
-                        console.warn(`In this situation, as default, it will be handled like ${type.toUpperCase()}.`)
-                        if(type === "html"){
-                            console.warn(`It will have xmlns="http://www.w3.org/1999/xhtml" set, and parsed as "text/html" by the 'DOMParser'.`)
-                            console.warn(`You can force SVG creation by passing a true set boolean at "options.mutual.a.isSVG", to the optional parameters object in the constructor call.`)
-                            console.warn(`\nEXAMLPLE:`)
-                            console.warn(`const svgContent = new NodeTemplate(\`<${t}></${t}>\`, { mutual: { ${t}: { isSVG: true } } })`)
-                        } else if(type === "svg"){
-                            console.warn(`It will have xmlns="http://www.w3.org/2000/svg" set, and parsed as "image/svg+xml" by the 'DOMParser'.`)
-                            console.warn(`You can force HTML creation by passing a true set boolean at "options.mutual.a.isHTML", to the optional parameters object in the constructor call.`)
-                            console.warn(`\nEXAMLPLE:`)
-                            console.warn(`const htmlContent = new NodeTemplate(\`<${t}></${t}>\`, { mutual: { ${t}: { isHTML: true } } })`)
-                        }
-                    } 
+            if(type === undefined){
+                let tagName = getFirstTagName(tagGroup)
+                tagName = tagName.toLocaleLowerCase()
+
+                addXMLNS = true
+                type = undefined
+                
+                if(tagName === "div"){
+                    type = "html"
+                } else if(tagName === "svg" || tagName === "g" || tagName === "foreignObject"){
+                    type = "svg"
                 } else {
-                    if(TAG_NAMES_SVG.includes(tagName)){
-                        type = "svg"
-                    } else if(TAG_NAMES_HTML.includes(tagName)){
-                        type = "html"
+                    if(MUTUAL_TAG_NAMES.includes(tagName)){
+                        switch(tagName){
+                            // I. CONCRETE CASES:
+                            // 1. Doesn't matter if it's handled as HTML or SVG, default: HTML. (not so concrete)
+                            case "script":
+                            case "style":
+                                addXMLNS = false
+                                type = "html"
+                                break
+                            // 2. Embedded Content has to be HTML.
+                            case "audio":
+                            case "canvas":
+                            case "iframe":
+                            case "video":
+                                type = "html"
+                                break
+                            // II. INCONCRETE CASES:
+                            // 1. Mutual tags, overridable default: SVG 
+                            case "font":
+                            case "title":
+                                if(options.mutual.a.isHTML){
+                                    type = "html"
+                                }
+                                else {
+                                    type = "svg"
+                                    if(tagName === "title"){
+                                        warnAbout("title")
+                                    } else {
+                                        warnAbout("font")
+                                    }
+                                }
+                                break
+                            // 2. Mutual tags, overridable default: HTML 
+                            case "a":
+                                if(options.mutual.a.isSVG){
+                                    type = "svg"
+                                }
+                                else {
+                                    type = "html"
+                                    warnAbout("a")
+                                }
+                                break
+                        }
+                        function warnAbout(t: String){
+                            console.warn(`You provided an <${t}></${t}> tag as a tag-group (or root node, referring to the string input context).`)
+                            console.warn(`The <${t}></${t}> tag exists in HTML and SVG namespace.`)
+                            console.warn(`In this situation, as default, it will be handled like ${type.toUpperCase()}.`)
+                            if(type === "html"){
+                                console.warn(`It will have xmlns="http://www.w3.org/1999/xhtml" set, and parsed as "text/html" by the 'DOMParser'.`)
+                                console.warn(`You can force SVG creation by passing a true set boolean at "options.mutual.a.isSVG", to the optional parameters object in the constructor call.`)
+                                console.warn(`\nEXAMLPLE:`)
+                                console.warn(`const svgContent = new NodeTemplate(\`<${t}></${t}>\`, { mutual: { ${t}: { isSVG: true } } })`)
+                            } else if(type === "svg"){
+                                console.warn(`It will have xmlns="http://www.w3.org/2000/svg" set, and parsed as "image/svg+xml" by the 'DOMParser'.`)
+                                console.warn(`You can force HTML creation by passing a true set boolean at "options.mutual.a.isHTML", to the optional parameters object in the constructor call.`)
+                                console.warn(`\nEXAMLPLE:`)
+                                console.warn(`const htmlContent = new NodeTemplate(\`<${t}></${t}>\`, { mutual: { ${t}: { isHTML: true } } })`)
+                            }
+                        } 
                     } else {
-                        throw new Error(`Could not detect type for tagName: ${tagName}.`)
+                        if(TAG_NAMES_HTML.includes(tagName)){
+                            type = "html"
+                        } else if(TAG_NAMES_SVG.includes(tagName)){
+                            type = "svg"
+                        } else {
+                            throw new Error(`Could not detect type for tagName: ${tagName}.`)
+                        }
                     }
                 }
             }
@@ -316,7 +323,7 @@ export default class NodeTemplate {
                 if(type === undefined) throw new Error("Something went wrong in type detection. Variable 'type' should not be undefined.")
                 switch(type){
                     case "html":
-
+                        
                         break
                     case "svg":
 
@@ -328,7 +335,52 @@ export default class NodeTemplate {
             }
 
             // 3. split or parse
-            /* worst cases:
+            /*
+                function handleTagGroup(tagGroup: String, options){
+                    let { type, addXMLNS } = options
+                    if html
+                        const SVGs = []
+                        while next svg
+                            cut out svg
+                            create replacement anchor with id=x; x starts zero
+                            increment x for next run
+                            const svgParsed = handleTagGroup(svg, { type: "svg" })
+                            SVGs.push(svgParsed)
+                        parse html
+                        SVGs.forEach
+                            add SVG before replacement anchor
+                            remove replacement anchor
+                        return parsedHTML
+                    if svg
+                        let EBContents = []
+                        while next "audio" || "canvas" || "iframe" || "video"
+                            cut out embedded content
+                            create replacement anchor with id=x; x starts zero
+                            increment x for next run
+                            const EBParsed = handleTagGroup(eb, { type: "html" })
+                            
+                        // on the same text, that now has replacement elements for embedded content...
+                        let FOContents = []
+                        while next foContent
+                            cut out foContent
+                            create replacement anchor with id=x; x starts zero
+                            increment x for next run
+                            get all tagGroups (function call)
+                            foContent = tagGroups.map(tg => handleTagGroup(tg, { type: "html" }))
+                        
+                        parse svg
+                        FOContents.forEach
+                            add foContent before replacement anchor
+                            remove replacement anchor
+                        EBContents.forEach
+                            add ebContent before replacement anchor
+                            remove replacement anchor
+
+                        return parsedSVG
+                })
+            */
+
+            /* worst tagGroup text cases:
                 1.
                 <div>
                     <div></div>
@@ -380,98 +432,56 @@ export default class NodeTemplate {
                     <tag></tag>
                 </tag>
             */
-            switch(type){
-                case "html":
-                    // get all svgs
-                    const svgs = undefined
-                    const hasSVG = /<svg/.test(this.text)
-                    const hasMultipleSVGs = (() => {
-                        if(hasSVG){
-                            let matches = this.text.match(/<svg[^>]*>/g)
-                            return (matches !== null) ? (matches.length > 1) : false
-                        } else {
-                            return false
-                        }
-                    })()
-                    // if its html with svg
-                    // - add placeholder <div id="svg-X"></div> tag before the svgs
-                    // - and cut out the whole svg to array (the text will have placeholders with ids instead of svgs)
-                    // PROBLEM IF THE SVG IS INSIDE FOREIGN OBJECT.
-                    // => go one by one. save to array, call 'analyzeSVG()' function each time
-                    // => this function handles foreign object and calls itself if svgs are embedded in html in a foreign object etc.
-                    //
-                    // =>  
-                    if(hasSVG) {
-                        var ph = -1
-                        const placeHolderIdText = "nodetemplate-svg-placeholder-"
-                        const textWithPlaceholders = this.text.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, match =>{
-                            ph += 1 // starts with zero
-                            return `<div id="${placeHolderIdText}${ph}"></div>${match}`
-                        })
-                        const textWithoutSVGTagGroups = textWithPlaceholders.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, ``)
-                        const svgTagGroups = this.text.match(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g)
-                        if(svgTagGroups === null || svgTagGroups.length < 1){
-                            throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
-                        }
-                        /* dont parse yet
-                        const doc = parser.parseFromString(textWithoutSVGTagGroups, "text/html")
-                        Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n))
-                        svgTagGroups.map(g => parser.parseFromString(g, "image/svg+xml")).forEach((d, ph) => {
-                            // QUERY SELECTOR ON FRAGMENT VS GETELEMENTBYID ON DOCUMENT?!
-                            const placeHolderNode = this.fragment.querySelector(`#${placeHolderIdText}${ph}`)
-                            placeHolderNode
-                                .parentNode
-                                .insertBefore(d.documentElement, placeHolderNode)
-                            placeHolderNode
-                                .parentNode
-                                .removeChild(placeHolderNode)
-                        })
-                        */
+
+
+            if(type === "html"){
+                // get all svgs?
+                const SVGs = undefined
+                // if its html with svg
+                // - add placeholder <div id="svg-X"></div> tag before the svgs
+                // - and cut out the whole svg to array (the text will have placeholders with ids instead of svgs)
+                // PROBLEM IF THE SVG IS INSIDE FOREIGN OBJECT.
+                // => go one by one. save to array, call 'analyzeSVG()' function each time
+                // => this function handles foreign object and calls itself if svgs are embedded in html in a foreign object etc.
+                //
+                // =>  
+                if(containsSVG(tagGroup)) {
+                    var ph = -1
+                    const placeHolderIdText = "nodetemplate-svg-placeholder-"
+                    const textWithPlaceholders = this.text.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, match =>{
+                        ph += 1 // starts with zero
+                        return `<div id="${placeHolderIdText}${ph}"></div>${match}`
+                    })
+                    const textWithoutSVGTagGroups = textWithPlaceholders.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g, ``)
+                    const svgTagGroups = this.text.match(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/g)
+                    if(svgTagGroups === null || svgTagGroups.length < 1){
+                        throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
                     }
-                    // if it's just html
-                    // no need to separate the tag-groups if its "text/html".
-                    else {
+                    /* dont parse yet
+                    const doc = parser.parseFromString(textWithoutSVGTagGroups, "text/html")
+                    Array.from(doc.body.childNodes).forEach(n => this.fragment.appendChild(n))
+                    svgTagGroups.map(g => parser.parseFromString(g, "image/svg+xml")).forEach((d, ph) => {
+                        // QUERY SELECTOR ON FRAGMENT VS GETELEMENTBYID ON DOCUMENT?!
+                        const placeHolderNode = this.fragment.querySelector(`#${placeHolderIdText}${ph}`)
+                        placeHolderNode
+                            .parentNode
+                            .insertBefore(d.documentElement, placeHolderNode)
+                        placeHolderNode
+                            .parentNode
+                            .removeChild(placeHolderNode)
+                    })
+                    */
+                }
+                // if it's just html
+                // no need to separate the tag-groups if its "text/html".
+                else {
+                    return createDocumentFragment(tagGroup)
+                } 
+            } else if(type === "svg"){
 
-                        // this.fragment = createDocumentFragment(this.text)
-                    } 
-                    break
-                    do {
-                        // in every html contains svg case
-
-                    } 
-                    while(containsSVG)              
-                case "svg":
-                    // get all foreignObjects
-                    const foreignObjects = [{
-                        fo: "",
-                        tagGroups: [{}],
-                    }]
-                    const hasForeignObject = /<foreignObject/.test(tagGroup)
-                    const hasMultipleForeignObjects = (() => {
-                        if(hasForeignObject){
-                            let matches = this.text.match(/<foreignObject[^>]*>/g)
-                            return (matches !== null) ? (matches.length > 1) : false
-                        } else {
-                            return false
-                        }
-                    })()
-                    if(hasForeignObject && !hasMultipleForeignObjects){
-                            // ...
-                    }    
-                    do {
-                        // in every svg case
-
-                    }
-                    while(containsFO)
-                    break
-                case "fo":
-                    // ...
-                    do {
-
-                    } while(containsSVG)
-                    break
+            } else {
+                throw new Error("Type was undefined.")
             }
-
 
         })
 
@@ -810,13 +820,13 @@ function createTagGroupStrings(tagText: String){
         }
     }
 
-    // inner function that can use the outer context
+    // inner function 
     function createTagGroupString(firstTagName: String, debug: Boolean){
         
-        let tagGroupString: String = "" // not needed if using recursion.
+        let tagGroupString: String = ""
         
         let unclosedTagCnt = 0
-        const unclosedTagExist = () => unclosedTagCnt !== 0
+        const unclosedTagExists = () => unclosedTagCnt !== 0
         
         const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
         const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
@@ -834,7 +844,7 @@ function createTagGroupStrings(tagText: String){
                     tagGroupString += openingTagMatches[0]
                     // no need to accumulate if the tag is a selfclosing tag 
                     if(openingTagMatches[2] === "/>"){
-                        if(!unclosedTagExist()){
+                        if(!unclosedTagExists()){
                             return tagGroupString
                         } else {
                             openingTagMatches = tagText.match(openingTagRegex)
@@ -856,7 +866,7 @@ function createTagGroupStrings(tagText: String){
                 }
             } while(closingTagMatches !== null && closingTagMatches[0] !== undefined)
 
-        } while(unclosedTagExist())
+        } while(unclosedTagExists())
         
         return tagGroupString
     }
@@ -867,6 +877,12 @@ function createTagGroupStrings(tagText: String){
     } else {
         return tagGroups
     }
+}
+function containsSVG(tagText: String){
+    return /<svg/.test(tagText)
+}
+function containsFO(tagText: String){
+    return /<foreignObject/.test(tagText)
 }
 
 function getQueryType(query: String | Node){
