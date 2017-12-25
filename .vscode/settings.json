@@ -7,7 +7,7 @@
         
         // root
         "static": true,         
-        "build": true,         
+        // "build": true,         
         "built": true,         
         "dist": true,         
         "node_modules": true,

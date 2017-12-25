@@ -24,9 +24,9 @@
     "babel": "babel --out-dir ./build ./src",
     "--------------------------------------------------------------------------------------------------------------------------------------------": "",
     "build": "clear; npm run --silent clean:dir && npm run --silent babelrc:build && npm run --silent babel && npm run --silent sound:microwave",
-    "test": "clear; npm run --silent babelrc:mocha && npm run --silent babel && mocha --compilers js:babel-core/register --require jsdom-global/register --",
+    "test": "clear; npm run --silent clean:dir && npm run --silent babelrc:mocha && npm run --silent babel && mocha --compilers js:babel-core/register --require jsdom-global/register --",
     "test:monitor": "nodemon -x \"npm run --silent test\"",
-    "test:all": "clear; npm run --silent babelrc:mocha && npm run --silent babel && mocha --compilers js:babel-core/register --require jsdom-global/register && npm run --silent sound:plock",
+    "test:all": "clear; npm run --silent clean:dir && npm run --silent babelrc:mocha && npm run --silent babel && mocha --compilers js:babel-core/register --require jsdom-global/register && npm run --silent sound:plock",
     "test:all:monitor": "nodemon -x \"npm run --silent test:all\"",
     "prepublishOnly": "npm run --silent test:all && npm run --silent build"
   },

@@ -63,7 +63,7 @@ export default class NodeTemplate {
          * cannot parse multipla SVG tag groups at once, as with HTML, where it doesn't matter. 
          */
         this.text = cleanInputString(tagText)
-        this.tagGroups = createTagGroupStrings(this.text)
+        this.tagGroups = getTagGroups(this.text)
         // that.hasMultipleTagGroups.set(this, this.tagGroups.length > 1)
         // that.hasSingleTagGroup.set(this, this.tagGroups.length === 1)
         // ------------------------------------------------------------------------------------------
@@ -345,72 +345,182 @@ export default class NodeTemplate {
 // @todo: fix parenthesis spaces
 // @feature: replace "" in attribute-values (css)
 // @feature: remove comments
-function cleanInputString(html: String) {
+function cleanInputString(tagText: String, options: any): String {
+    options = Object.assign({}, options)
+    let { removeComments, replaceAttributeValueQuotes } = options
     
-    // remove all newlines, tabs and returns from the html string to create one line
+    // remove all newlines, tabs and returns from the tagText string to create one line
     // regex: [\n\t\r]
     // subst: null
-    html = html.replace(/[\n\t\r]/g, "")
+    tagText = tagText.replace(/[\n\t\r]/g, "")
 
     // style multiline specific:
     // ------------------------------------------------------------------
     // remove all spaces > 2 
     // regex: \s{2,}
     // subst: null
-    html = html.replace(/\s{2,}/g, " ")
+    tagText = tagText.replace(/\s{2,}/g, " ")
     
     // add space after every ; in style attributes
     // regex: ;([^\s])
     // subst: ; $1
-    html = html.replace(/;([^\s])/g, "; $1")
+    tagText = tagText.replace(/;([^\s])/g, "; $1")
     
     // remove space before "> close combination
     // regex: \s(">)
     // subst: $1
-    html = html.replace(/\s(">)/g, "$1")    
+    tagText = tagText.replace(/\s(">)/g, "$1")    
     // ------------------------------------------------------------------
 
 
     // remove all whitespace between tags but not inside of tags
     // regex: >\s*<
     // subst: ><
-    html = html.replace(/>\s*</g, "><")
+    tagText = tagText.replace(/>\s*</g, "><")
 
     // remove all whitespace before the first tag or after the last tag
     // regex: ^(\s*)|(\s*)$
     // subst: null
-    html = html.replace(/^(\s*)|(\s*)$/g, "")
+    tagText = tagText.replace(/^(\s*)|(\s*)$/g, "")
 
     // remove spaces before tagText nodes
     // regex: >\s*
     // subst: >
-    html = html.replace(/>\s*/g, ">")
+    tagText = tagText.replace(/>\s*/g, ">")
     
     // remove spaces after tagText nodes
     // regex: \s*<
     // subst: <
-    html = html.replace(/\s*</g, "<")
+    tagText = tagText.replace(/\s*</g, "<")
 
     // remove space between opening tag and first attribute
     // regex: (<\w*)(\s{2,})
     // subst: $1\s
-    html = html.replace(/(<\w+)(\s{2,})/g, "$1 ")
+    tagText = tagText.replace(/(<\w+)(\s{2,})/g, "$1 ")
 
     // remove space between attributes (trailing space)
     // regex: ([\w-_]+="[\w\s-_]+")(\s*(?!>))
     // subst: $1\s
-    html = html.replace(/([\w-_]+="[\w\s-_]+")(\s*(?!>))/g, "$1 ")
+    tagText = tagText.replace(/([\w-_]+="[\w\s-_]+")(\s*(?!>))/g, "$1 ")
 
     // remove space between last attribute and closing tag
     // regex: (\w+="\w+")(\s+)>
     // subst: $1>
-    html = html.replace(/([\w-_]+="[\w\s-_]+")(\s{2,})>/g, "$1>")
+    tagText = tagText.replace(/([\w-_]+="[\w\s-_]+")(\s{2,})>/g, "$1>")
     
+    // if(removeComments){
+    //     // tagText = tagText.replace()
+    // }
+    // if(replaceAttributeValueQuotes){
+    //     // tagText = tagText.replace()
+    // }
 
-    // console.log("cleaned html string:", html)
-    return html
+    // console.log("cleaned tagText string:", tagText)
+    return tagText
 }
-function createTagGroupStrings(tagText: String){
+/*
+
+    <div></div>
+    <foreignObject>
+        <div></div>
+        <div></div>
+        <div>
+            <svg>
+                <foreignObject></foreignObject>
+            </svg>
+        </div>
+    </foreignObject>
+    <div></div>
+
+*/
+/**
+ * The function will return the next tag with the provided 'tagName'.
+ * 
+ * @param {*} tagText 
+ * @param {*} tagName  
+ * @param {*} getTagContent 
+ */
+function getTagGroupByName(tagText: String, tagName: String, getTagContent: Boolean): any {
+        let tagGroup = ""
+        let content = ""
+        let startIndex = undefined
+        let endIndex = undefined
+        let contentStartIndex = undefined
+        let contentEndIndex = undefined
+
+        let unclosedTagCnt = 0
+        const unclosedTagExists = () => unclosedTagCnt !== 0
+
+        const openingTagRegex = new RegExp(`^(<${tagName}(?:[^\\/>]*)?(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${tagName}|<${tagName}))))`)
+        const closingTagRegex = new RegExp(`^(<\\/${tagName}>(?:.*?)(?=(?:<\\/${tagName})|(?:<${tagName}))|(?:<\\/${tagName}>))`)
+
+        // go to start of the first tag:
+        const textBeforeStart = tagText.match(/(.*?)(?=<foreignObject)/)
+        startIndex = textBeforeStart[0].length
+        tagText = tagText.substring(startIndex)
+
+        // accumulate tag group
+        while(unclosedTagExists()){
+            let openingTagMatches = undefined
+            let closingTagMatches = undefined
+            // 1. accumulate opening tags
+            do {
+                openingTagMatches = tagText.match(openingTagRegex)
+                if(openingTagMatches !== null && openingTagMatches[0] !== undefined){
+                    tagText = tagText.substring(openingTagMatches[0].length)
+                    tagGroup += openingTagMatches[0]
+                    // no need to accumulate if the tag is a selfclosing tag 
+                    if(openingTagMatches[2] === "/>"){
+                        if(!unclosedTagExists()){
+                            return tagGroup
+                        } else {
+                            continue
+                        }
+                    } else {
+                        unclosedTagCnt += 1
+                    }
+                }
+            } while(openingTagMatches !== null && openingTagMatches[0] !== undefined)
+            // 2. accumulate closing tags
+            do {
+                closingTagMatches = tagText.match(closingTagRegex)
+                if(closingTagMatches !== null && closingTagMatches[0] !== undefined){
+                    tagText = tagText.substring(closingTagMatches[0].length)
+                    tagGroup += closingTagMatches[0]
+                    unclosedTagCnt -= 1
+                }
+            } while(closingTagMatches !== null && closingTagMatches[0] !== undefined)
+        }
+
+        // add endIndex to be able to cut the group after extracting it.
+        endIndex = startIndex + tagGroup.length
+
+        // remove first opening and last closing tag from accumulated tag group
+        // PROBLEM: tagGroup is just a self closing tag, without content
+        // PROBLEM: tagGroup has no content
+        if(getTagContent){
+            const firstOpeningTagRegex = new RegExp(`^<${tagName}(?:[^\\/>]*)?(\\/)?>`)
+            const lastClosingTagRegex = new RegExp(`<\\/${tagName}>$`)
+            const firstOpeningTagMatch = tagGroup.match(firstOpeningTagRegex)
+            const lastClosingTagMatch = tagGroup.match(lastClosingTagRegex)
+            // if the tag group is a self closing tag, it has no content.
+            if(firstOpeningTagMatch[1] === "/"){
+                console.warn("A selfclosing tag has no content.")
+                content = ""
+            } else {
+                content = tagGroup.substring(firstOpeningTagMatch[0].length, lastClosingTagMatch.index)
+            }
+            contentStartIndex = firstOpeningTagMatch[0].length
+            contentEndIndex = lastClosingTagMatch.index
+        }
+
+        if(getTagContent){
+           return { tagGroup, startIndex, endIndex }
+        } else {
+           return { tagGroup, startIndex, endIndex, content, contentStartIndex, contentEndIndex }
+        }
+}
+function getTagGroups(tagText: String): Array<String> {
     // outer context
     const tagGroups: Array<String> = []
 
@@ -431,21 +541,17 @@ function createTagGroupStrings(tagText: String){
     }
 
     // inner function 
-    function createTagGroupString(firstTagName: String, debug: Boolean){
-        
+    function createTagGroupString(firstTagName: String, debug: Boolean): String{  
         let tagGroupString: String = ""
         
         let unclosedTagCnt = 0
         const unclosedTagExists = () => unclosedTagCnt !== 0
-        
         const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
         const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
 
-        do{
-            
+        while(unclosedTagExists()){
             let openingTagMatches = undefined
             let closingTagMatches = undefined
-                
             // 1. accumulate opening tags
             do {
                 openingTagMatches = tagText.match(openingTagRegex)
@@ -465,7 +571,6 @@ function createTagGroupStrings(tagText: String){
                     }
                 }
             } while(openingTagMatches !== null && openingTagMatches[0] !== undefined)
-
             // 2. accumulate closing tags
             do {
                 closingTagMatches = tagText.match(closingTagRegex)
@@ -475,8 +580,7 @@ function createTagGroupStrings(tagText: String){
                     unclosedTagCnt -= 1
                 }
             } while(closingTagMatches !== null && closingTagMatches[0] !== undefined)
-
-        } while(unclosedTagExists())
+        }
         
         return tagGroupString
     }
@@ -488,7 +592,7 @@ function createTagGroupStrings(tagText: String){
         return tagGroups
     }
 }
-function handleTagGroup(tagGroup: String, options: any){
+function handleTagGroup(tagGroup: String, options: any): Node {
     /* 
         worst tagGroup text cases:
         1.
@@ -645,30 +749,29 @@ function handleTagGroup(tagGroup: String, options: any){
 
     // 3. split or parse
     if(type === "html"){
-        const SVGs = []
-        let anchorIndex = 0
-        let anchorId = `nodetemplate-svg-anchor-`
+        const SVGNodes = []
+        let SVGAnchorIndex = 0
+        let SVGAnchorId = `nodetemplate-svg-anchor-`
         while(containsSVG(tagGroup)){
-            anchorId += anchorIndex
-            let svgText = undefined
+            let SVGText = undefined
             tagGroup = tagGroup.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/, match => {
-                svgText = match
-                return `<a id="${anchorId}${anchorIndex}"></a>`   
+                SVGText = match
+                return `<a id="${SVGAnchorId}${SVGAnchorIndex}"></a>`   
             })
-            anchorIndex++
-            if(svgText !== null){
-                let svgNode = handleTagGroup(svgText, { type: "svg" })
-                if (svgNode === null || svgNode === undefined){
+            SVGAnchorIndex++
+            if(SVGText !== null){
+                let SVGNode = handleTagGroup(SVGText, { type: "svg" })
+                if (SVGNode === null || SVGNode === undefined){
                     throw new Error("Could not parse SVG.")
                 }
-                SVGs.push(svgNode)
+                SVGNodes.push(SVGNode)
             } else {
                 throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
             }
         }
         const HTMLDocument = parser.parseFromString(tagGroup, "text/html")
-        SVGs.forEach((SVG, anchorIndex) => {
-            const anchorNode = HTMLDocument.getElementById(`#${anchorId}${anchorIndex}`)
+        SVGNodes.forEach((SVG, idx) => {
+            const anchorNode = HTMLDocument.getElementById(`${SVGAnchorId}${idx}`)
             anchorNode.parentNode.insertBefore(SVG, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
@@ -677,62 +780,90 @@ function handleTagGroup(tagGroup: String, options: any){
         return HTMLDocument.body.firstElementChild
     }
     else if(type === "svg"){
-        const EBContents = []
-        let anchorIndex = 0
-        let ebAnchorId = `nodetemplate-eb-anchor-`
+        const EBNodes = []
+        let EBAnchorIndex = 0
+        let EBAnchorId = `nodetemplate-eb-anchor-`
         while(containsEB(tagGroup)){
-            ebAnchorId += anchorIndex
-            let ebText = undefined
+            let EBText = undefined
             tagGroup = tagGroup.replace(/(<(?=audio||canvas||iframe||video)\1\b(?:[^>]*>.*?)(?:<\/\1>)+)/, match => {
-                ebText = match
-                return `<a id="${ebAnchorId}${anchorIndex}"></a>`   
+                EBText = match
+                return `<a id="${EBAnchorId}${EBAnchorId}"></a>`   
             })
-            anchorIndex++
-                if(ebText !== null){
-                let ebNode = handleTagGroup(ebText, { type: "html" })
-                if (ebNode === null || ebNode === undefined){
+            EBAnchorIndex++
+            if(EBText !== null){
+                let EBNode = handleTagGroup(EBText, { type: "html" })
+                if (EBNode === null || EBNode === undefined){
                     throw new Error("Could not parse SVG.")
                 }
-                EBContents.push(ebNode)
+                EBNodes.push(EBNode)
             } else {
                 throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
             }
         }
 
-        let FOContents = []
-        let anchorIndex = 0
-        let foAnchorId = `nodetemplate-fo-content-anchor-`
-        while(containsEB(tagGroup)){
-            foAnchorId += anchorIndex
-            let foContentText = undefined
-            // regex actions:
-            // 1. substring: 
-            //      from:   start of first foreignObject content
-            //      to:     end of first foreignObject content
-            // .*?<foreignObject\b[^>]*>
-            // OR just: 
-            // 1. substring from first foreignObject content start
-            // 2. substring from start to foreignObject end 
-            // .*?</foreignObject>
-            // POSSIBLE PROBLEMS: FO INSIDE FO!!!
-            // @TODO: implement above
-            // @TODO: add anchor element
-            anchorIndex++
-                if(foContentText !== null){
-                FOContents = foContentText.map(tg => handleTagGroup(tg, { type: "html" }))
-            } else {
-                throw new Error("you wanted to parse one or multiple svg-type tag-groups but something is wrong with your string. missing closing tag?")
-            }
+        const FONodes = []
+        const FOContentNodes = []
+        let FOAnchorIndex = 0
+        let FOAnchorId = `nodetemplate-fo-anchor-`
+        let FOContentAnchorId = `nodetemplate-fo-content-anchor-`
+        while(containsFO(tagGroup)){
+            /*
+                <rect/><foreignObject><div><h1>jo</h1></div></foreignObject><rect/><foreignObject>something</foreignObject>
+                becomes: {
+                    tagGroup: "<foreignObject><div><h1>jo</h1></div></foreignObject>",
+                    startIndex: 7,
+                    endIndex: 49,
+                    content: "<div><h1>jo</h1></div>",
+                    contentStartIndex: 22,
+                    contentEndIndex: 33,
+                }
+                => FONodes = [ "<foreignObject><a id="fo-content-0"></a></foreignObject>" ]
+                => FOContentNodes = [ "<div><h1>jo</h1></div>" ]
+                => <rect/><a id="fo-0"><rect/><foreignObject>something</foreignObject>
+                                              | -> this will be the next foreign object cause foreignObjectExists()
+                THEN:
+                if no more foreign objects exist:
+                - parse svg
+                - add parsed foreignObjects => parse as svg
+                - add parsed foreignObject content to foreignObjects => handleTagGroup() 
+            */
+            let fo = getTagGroupByName(tagGroup, "foreignObject", true)
+            // remove fo and add replacement anchor
+            tagGroup = tagGroup.substring(0, fo.startIndex) + tagGroup.substring(fo.endIndex)
+            const beforeFO = tagGroup.slice(0, fo.startIndex)
+            const afterFO = tagGroup.slice(fo.startIndex)
+            tagGroup = beforeFO.concat(`<a id="${FOAnchorId}${FOAnchorIndex}"></a>`).concat(afterFO)
+            // remove fo content and add replacement anchor 
+            const beforeFOContent = fo.tagGroup.slice(0, fo.contentStartIndex)
+            const afterFOContent = fo.tagGroup.slice(fo.contentStartIndex)
+            fo.tagGroup = beforeFOContent.concat(`<a id="${FOContentAnchorId}${FOAnchorIndex}"></a>`).concat(afterFOContent)
+            // parse fo
+            FONodes.push(handleTagGroup(fo.tagGroup, { type: "svg" }))
+            // parse fo contents
+            const FOContentTexts = getTagGroups(fo.content)
+            FOContentNodes.push(FOContentTexts.map(tg => handleTagGroup(tg, { type: "html" })))
+            FOAnchorIndex++
         }
 
+        // parse svg
         const SVGDocument = parser.parseFromString(tagGroup, "image/svg+xml")
-        FOContents.forEach((FO, anchorIndex) => {
-            const anchorNode = SVGDocument.getElementById(`#${foAnchorId}${anchorIndex}`)
+        // add fos 
+        FONodes.forEach((FO, anchorIndex) => {
+            const anchorNode = SVGDocument.getElementById(`${FOAnchorId}${anchorIndex}`)
             anchorNode.parentNode.insertBefore(FO, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
-        EBContents.forEach((EB, anchorIndex) => {
-            const anchorNode = SVGDocument.getElementById(`#${ebAnchorId}${anchorIndex}`)
+        // add foContents
+        FOContentNodes.forEach((FOContent, anchorIndex) => {
+            const anchorNode = SVGDocument.getElementById(`${FOContentAnchorId}${anchorIndex}`)
+            const fragment = window.document.createDocumentFragment()
+            FOContent.forEach(x => fragment.appendChild(x))
+            anchorNode.parentNode.insertBefore(fragment, anchorNode)
+            anchorNode.parentNode.removeChild(anchorNode)
+        })
+        // add ebs
+        EBNodes.forEach((EB, anchorIndex) => {
+            const anchorNode = SVGDocument.getElementById(`${EBAnchorId}${anchorIndex}`)
             anchorNode.parentNode.insertBefore(EB, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
@@ -743,17 +874,17 @@ function handleTagGroup(tagGroup: String, options: any){
 }
 
 // helpers (constructor)
-function getFirstTagName(tagText: String){
+function getFirstTagName(tagText: String): String {
     let matches = tagText.match(/^<([a-zA-Z\d]+)/)
     return (matches !== null) ? matches[1] : undefined
 }
-function containsSVG(tagText: String){
+function containsSVG(tagText: String): Boolean {
     return /<svg/.test(tagText)
 }
-function containsFO(tagText: String){
+function containsFO(tagText: String): Boolean {
     return /<foreignObject/.test(tagText)
 }
-function containsEB(tagText: String){
+function containsEB(tagText: String): Boolean {
     return /<(?=audio||canvas||iframe||video)\1/.test(tagText)   
 }
 /**
@@ -788,7 +919,7 @@ const iterate = (n: Node, cb: Function) => {
 
 
 // helpers (methods)
-function getQueryType(query: String | Node){
+function getQueryType(query: String | Node): String {
     return  query instanceof Node ? "Node" : 
             query.charAt(0) === "." ? "id" : 
             query.charAt(0) === "#" ? "class" : "query"

@@ -9,9 +9,21 @@ import $ from "jquery"
 // actual code imports
 import NodeTemplate from "../build/NodeTemplate.js"
 
-const detectHTML = new NodeTemplate(`
+const test1 = new NodeTemplate(`
+    <div>
+    </div>
+        <foreignObject>
+            <div></div>
+            <div></div>
+            <div>
+            <svg>
+                <foreignObject>
+                </foreignObject>
+            </svg>
+            </div>
+        </foreignObject>
     <div>
     </div>
 `)
-console.dir(detectHTML)
+console.dir(test1)
 
