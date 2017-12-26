@@ -8,7 +8,9 @@ VALUES_TO_REMOVE.forEach(x => {
     MUTUAL_TAG_NAMES.splice(found, 1)
 })
 
-const DEFAULT_OPTIONS = {}
+const DEFAULT_OPTIONS = {
+
+}
 
 const XMLNS_SVG = "http://www.w3.org/2000/svg"
 const XMLNS_XHTML = "http://www.w3.org/1999/xhtml"
@@ -37,238 +39,59 @@ export default class NodeTemplate {
      */
     constructor(tagText: String, options: Object) {
         
-        // handle options
-        // ------------------------------------------------------------------------------------------
-        // typechecks
+        // parameter typechecks
         if(typeof tagText !== "string"){
             throw new Error("you need to provide a xml string as first parameter.")
         }
 
         // merge default options
-        let options = Object.assign({}, DEFAULT_OPTIONS, options)
+        options = Object.assign({}, DEFAULT_OPTIONS, options)
         let { svg } = options
-        // ------------------------------------------------------------------------------------------
         
-        
-        // get all tag-groups
-        // ------------------------------------------------------------------------------------------
-        /**
-         * SVGs can't just be parsed in the same way as HTML. 
-         * If it is not done the right way, they would not be displayed.
-         * SVGs must be parsed with the "image/svg+xml" option by the 'DOMParser'.
-         * They also need to have a proper xmlns attribute set, before they get parsed.
-         *  
-         * If the text contains multiple SVG tag groups (or HTML and multiple SVG tag groups),
-         * They need to get separated before being parsed, cause the 'DOMParser'
-         * cannot parse multipla SVG tag groups at once, as with HTML, where it doesn't matter. 
-         */
+        // prepare input string
         this.text = cleanInputString(tagText)
         this.tagGroups = getTagGroups(this.text)
-        // that.hasMultipleTagGroups.set(this, this.tagGroups.length > 1)
-        // that.hasSingleTagGroup.set(this, this.tagGroups.length === 1)
-        // ------------------------------------------------------------------------------------------
 
-        /*
-            CSS positioning properties (e.g. top and margin) have no effect 
-            when positioning the embedded content element in the SVG coordinate
-            system. They can, however, be used to position child elements of
-            a ‘foreignObject’ or HTML embedding element. 
-
-            FOREIGN OBJECT RESEARCH RESULTS:
-            @xmlns:     - foreignObject html tag groups need html namespace !!!!!
-            @parsing:   - foreignObject html tags do not need a body element
-            @parsing:   - foreignObject html tags can just be parsed as "image/svg+xml" !!!!!
-            @xmlns:     - svg tag groups in an foreignObject, do not need a xmlns attribute
-            @xmlns:     - svg tags in a html tag group in an foreignObject, need a xmlns attribute !!!!!
-            @mutual:    - if foreignObject has a tag group with mututal tag name
-                        => see "type detection"
-
-            TEST CODE:
-            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
-                <foreignObject x="0" y="0" width="100" height="100">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;">
-                        <div style="width:100px; height:100px; background-color:blue; position: absolute;">
-                            <div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div>
-                        </div>
-                    </div>
-                </foreignObject>
-            </svg>
-
-            1. `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><foreignObject x="0" y="0" width="100" height="100"><div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;"><div style="width:100px; height:100px; background-color:blue; position: absolute;"><div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div></div></div></foreignObject></svg>`
-                var p = new DOMParser()
-                var svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><foreignObject x="0" y="0" width="100" height="100"><div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;"><div style="width:100px; height:100px; background-color:blue; position: absolute;"><div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div></div></div></foreignObject></svg>`
-                var svgParsed = p.parseFromString(svg, "image/svg+xml").documentElement
-                document.body.appendChild(svgParsed)
-    
-            2.1 `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;"><div style="width:100px; height:100px; background-color:blue; position: absolute;"><div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div></div></div>`
-            2.2 `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><foreignObject x="0" y="0" width="100" height="100"></foreignObject></svg>`
-                var p = new DOMParser()
-                var svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><foreignObject x="0" y="0" width="100" height="100"></foreignObject></svg>`
-                var html = `<div xmlns="http://www.w3.org/1999/xhtml" style="width:100px; height:100px; box-sizing: border-box; border: 2px solid red; position: static;"><div style="width:100px; height:100px; background-color:blue; position: absolute;"><div y="80" style="width:100%; height: 20px; background-color:yellow; position:relative; top:80px;"></div></div></div>`
-                var svgParsed = p.parseFromString(svg, "image/svg+xml").documentElement
-                var htmlParsed = p.parseFromString(html, "text/html").body.firstElementChild
-                document.body.appendChild(svgParsed)
-                svgParsed.firstChild.appendChild(htmlParsed)
-            
-
-            <svg xmlns="http://www.w3.org/2000/svg">
-                <foreignObject>
-                    <div xmlns="http://www.w3.org/1999/xhtml"></div>
-                    <div xmlns="http://www.w3.org/1999/xhtml"></div>
-                </foreignObject>
-            </svg>
-
-
-            <svg xmlns="http://www.w3.org/2000/svg">
-                <foreignObject>
-                    <div xmlns="http://www.w3.org/1999/xhtml"></div>
-                    <svg></svg>
-                </foreignObject>
-            </svg>
-
-
-            <svg xmlns="http://www.w3.org/2000/svg">
-                <foreignObject>
-                    <div xmlns="http://www.w3.org/1999/xhtml">
-                        <svg xmlns="http://www.w3.org/2000/svg"></svg>
-                    </div>
-                </foreignObject>
-            </svg>
-
-            <svg xmlns="http://www.w3.org/2000/svg">
-                <foreignObject>
-                    <div xmlns="http://www.w3.org/1999/xhtml">
-                        <svg xmlns="http://www.w3.org/2000/svg">
-                            <foreignObject>
-                                <div xmlns="http://www.w3.org/1999/xhtml">
-                                    <svg xmlns="http://www.w3.org/2000/svg">
-                                        <foreignObject>
-                                            <div xmlns="http://www.w3.org/1999/xhtml">
-                                                <svg xmlns="http://www.w3.org/2000/svg">
-                                                    <foreignObject>
-                                                        <div xmlns="http://www.w3.org/1999/xhtml">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"></svg>
-                                                        </div>
-                                                    </foreignObject>
-                                                </svg>
-                                            </div>
-                                        </foreignObject>
-                                    </svg>
-                                </div>
-                            </foreignObject>
-                        </svg>
-                    </div>
-                </foreignObject>
-            </svg>
-
-        */
-
-
-        // tag group type detection
-        // ------------------------------------------------------------------------------------------
-        /**
-         * Type detection:
-         * ----------------------------------------------------------------------------------------------------
-         * General idea: Distinguish between HTML and SVG by looking at the tag name.
-         * Some tag names in HTML and SVG are mutual. They "exist in both".
-         * For example the <a> Element exists in HTML and SVG, but in SVG it implements SVG interfaces aswell.
-         * ====================================================================================================
-         * Mutual tag names:
-         * Distinguish between HTML and SVG and always provide a XMLNS-Attribute.
-         * ====================================================================================================
-         * 'audio'
-         * 'canvas'
-         * 'iframe'
-         * 'video'
-         * - HTML Embedded content 
-         * => type: html
-         * => xmlns: true
-         * ----------------------------------------------------------------------------------------------------
-         * 'a'
-         * - if <a> is a tag group, warn the user that 'NodeTemplate' assumes it to be in the html namespace. 
-         * => type: html
-         * => xmlns: true
-         * ----------------------------------------------------------------------------------------------------
-         * 'font'
-         * - mdn says the font element is deprecated, at least for html.
-         * => type: svg
-         * => xmlns: true
-         * ----------------------------------------------------------------------------------------------------
-         * 'title'
-         * - the html title element is located in the head element, thus there will be no need to parse it as html.
-         * => type: svg
-         * => xmlns: true
-         * ----------------------------------------------------------------------------------------------------
-         * 'script'
-         * 'style'
-         * - Caution if a tag group is a <script> or <style> Element!
-         * - It should be parsed as HTML!
-         * - It does not need a xmlns attribute!
-         * - It will be found under doc.head.firstChild!
-         * => type: script|style
-         * => xmlns: false
-         */
-        /**
-            var p = new DOMParser()
-            var svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect x="0" y="0" width="100" height="100"/></svg>`
-            var html = `<style>rect { fill:red }</style>`
-            var svgParsed = p.parseFromString(svg, "image/svg+xml").documentElement
-            var htmlParsed = p.parseFromString(html, "text/html").head.firstChild      
-            var fragment = document.createDocumentFragment()
-			fragment.appendChild(htmlParsed)
-			fragment.appendChild(svgParsed)
-			document.body.appendChild(fragment)
-         */
-        /**
-         * ====================================================================================================
-         */
-
-        // advance tag group information and parse:
+        // parse
         this.fragment = window.document.createDocumentFragment()
         this.tagGroups.forEach(tg => {
             console.log("adding tagGroup to the fragment:", tg)
             this.fragment.appendChild(tg)
         })
         console.log("finished fragment:", this.fragment)
-        // ------------------------------------------------------------------------------------------
-        
+    
+        // // create node references
+        // const createReferences = (() => {
+        //     // add element references from 'data-tref' and 'id' attributes
+        //     this.refs = {}
+        //     this.ids = {}
+        //     Array.from(this.fragment.childNodes).forEach(tagGroup => {
+        //         iterate(tagGroup, n => {
+        //             let ref = undefined
+        //             if(n.dataset === undefined){
+        //                 ref = n.getAttribute("data-ref")
+        //                 if(ref !== null){
+        //                     this.refs[ref] = n
+        //                 }
+        //             } else {
+        //                 ref = n.dataset.ref
+        //                 if(ref !== undefined){
+        //                     this.refs[ref] = n
+        //                 }
+        //             }
 
-        // create node references
-        // ------------------------------------------------------------------------------------------
-        /*
-            const createReferences = (() => {
-                // add element references from 'data-tref' and 'id' attributes
-                this.refs = {}
-                this.ids = {}
-                Array.from(this.fragment.childNodes).forEach(tagGroup => {
-                    iterate(tagGroup, n => {
-                        let ref = undefined
-                        if(n.dataset === undefined){
-                            ref = n.getAttribute("data-ref")
-                            if(ref !== null){
-                                this.refs[ref] = n
-                            }
-                        } else {
-                            ref = n.dataset.ref
-                            if(ref !== undefined){
-                                this.refs[ref] = n
-                            }
-                        }
+        //             // add node id references
+        //             if (n.id !== "") {
+        //                 this.ids[n.id] = n
+        //             }
+        //         })
+        //     })
 
-                        // add node id references
-                        if (n.id !== "") {
-                            this.ids[n.id] = n
-                        }
-                    })
-                })
-
-                // add root reference
-                this.root = (this.fragment.childNodes.length === 1)
-                    ? this.fragment.firstElementChild
-                    : Array.from(this.fragment.childNodes)
-            })()
-        */
-        // ------------------------------------------------------------------------------------------
+        //     // add root reference
+        //     this.root = (this.fragment.childNodes.length === 1)
+        //         ? this.fragment.firstElementChild
+        //         : Array.from(this.fragment.childNodes)
+        // })()
     }
     
     /**
@@ -346,7 +169,7 @@ export default class NodeTemplate {
 // @feature: replace "" in attribute-values (css)
 // @feature: remove comments
 function cleanInputString(tagText: String, options: any): String {
-    let options = Object.assign({}, options)
+    options = Object.assign({}, options)
     let { removeComments, replaceAttributeValueQuotes } = options
     
     // remove all newlines, tabs and returns from the tagText string to create one line
@@ -415,7 +238,7 @@ function cleanInputString(tagText: String, options: any): String {
     //     // tagText = tagText.replace()
     // }
 
-    // console.log("cleaned tagText string:", tagText)
+    console.log("cleaned tagText string:", tagText)
     return tagText
 }
 /*
@@ -526,7 +349,8 @@ function getTagGroups(tagText: String): Array<String> {
 
     // execute tag group creation
     while(tagText.length > 0){
-        const firstTagName = getFirstTagName(tagText)
+        console.log("tagText:", tagText)
+        let firstTagName = getFirstTagName(tagText)
         if(firstTagName !== undefined){
 
             let tagGroupString = createTagGroupString(firstTagName, false)
