@@ -45,7 +45,7 @@ export default class NodeTemplate {
         }
 
         // merge default options
-        options = Object.assign({}, DEFAULT_OPTIONS, options)
+        let options = Object.assign({}, DEFAULT_OPTIONS, options)
         let { svg } = options
         // ------------------------------------------------------------------------------------------
         
@@ -346,7 +346,7 @@ export default class NodeTemplate {
 // @feature: replace "" in attribute-values (css)
 // @feature: remove comments
 function cleanInputString(tagText: String, options: any): String {
-    options = Object.assign({}, options)
+    let options = Object.assign({}, options)
     let { removeComments, replaceAttributeValueQuotes } = options
     
     // remove all newlines, tabs and returns from the tagText string to create one line
