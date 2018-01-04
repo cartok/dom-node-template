@@ -504,11 +504,10 @@ function handleTagGroup(tagGroup: String, options: any): Node {
     console.log("type:", type)
     if(type === undefined){
         let tagName = getFirstTagName(tagGroup)
-        tagName = tagName.toLocaleLowerCase()
 
         addXMLNS = true
         type = undefined
-        
+
         if(tagName === "div"){
             type = "html"
         } else if(tagName === "svg" || tagName === "g" || tagName === "foreignObject"){
@@ -587,6 +586,10 @@ function handleTagGroup(tagGroup: String, options: any): Node {
     console.log("type:", type)
 
     // 2. add xmlns
+    if(addXMLNS === undefined){
+        addXMLNS = true
+    }
+    console.log("addXMLNS:", addXMLNS)
     if(addXMLNS){
         if(type === undefined) throw new Error("Something went wrong in type detection. Variable 'type' should not be undefined.")
         let XMLNS = (type === "html") ? XMLNS_XHTML : XMLNS_SVG
@@ -671,9 +674,9 @@ function handleTagGroup(tagGroup: String, options: any): Node {
             */
             let fo = getTagGroupByName(tagGroup, "foreignObject", true)
             // remove fo and add replacement anchor
-            // console.log("tagGroup before remove fo:", tagGroup)
+            console.log("tagGroup before remove fo:", tagGroup)
             tagGroup = tagGroup.substring(0, fo.startIndex) + tagGroup.substring(fo.endIndex)
-            // console.log("tagGroup after remove fo:", tagGroup)
+            console.log("tagGroup after remove fo:", tagGroup)
             const beforeFO = tagGroup.slice(0, fo.startIndex)
             const afterFO = tagGroup.slice(fo.startIndex)
             tagGroup = beforeFO.concat(`<a id="${FOAnchorId}${FOAnchorIndex}"></a>`).concat(afterFO)
