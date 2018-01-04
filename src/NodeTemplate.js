@@ -361,18 +361,22 @@ function getTagGroups(tagText: String){
             let matches = tagText.match(/^<([a-zA-Z\d]+)/)
             return (matches !== null) ? matches[1] : undefined
         })()
-        let tagGroupString = createTagGroupString(firstTagName, false)
-        if(tagGroupString !== undefined){
-            tagGroups.push(tagGroupString)
+        if(firstTagName !== undefined){
+            let tagGroupString = createTagGroupString(firstTagName, false)
+            if(tagGroupString !== undefined){
+                tagGroups.push(tagGroupString)
+            } else {
+                throw new Error("createTagGroupString(firstTagName) returned 'undefined'.")
+            }
         } else {
-            throw new Error("Function createTagGroupString() returned 'undefined'.")
+            throw new Error("firstTagName is 'undefined'.")
         }
     }
 
     // inner function that can use the outer context
     function createTagGroupString(firstTagName: String, debug: Boolean){
         
-        let tagGroupString: String = "" // not needed if using recursion.
+        let tagGroupString = ""
         
         let unclosedTagCnt = 0
         const unclosedTagExist = () => unclosedTagCnt !== 0
@@ -380,8 +384,7 @@ function getTagGroups(tagText: String){
         const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
         const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
 
-        do{
-            
+        do { 
             let openingTagMatches = undefined
             let closingTagMatches = undefined
                 
