@@ -51,7 +51,8 @@ export default class NodeTemplate {
         // prepare input string
         this.text = cleanInputString(tagText)
         this.tagGroups = getTagGroups(this.text)
-        console.log(this.tagGroups)
+        console.log("tagGroups:", this.tagGroups)
+
         // parse
         this.fragment = window.document.createDocumentFragment()
         this.tagGroups.forEach(tg => {
@@ -383,6 +384,7 @@ function getTagGroups(tagText: String){
         
         const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
         const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
+        const lastClosingTagRegex = new RegExp(`^(<\/${firstTagName}[^>]*?>)`)
 
         do { 
             let openingTagMatches = undefined
@@ -395,13 +397,8 @@ function getTagGroups(tagText: String){
                     tagText = tagText.substring(openingTagMatches[0].length)
                     tagGroupString += openingTagMatches[0]
                     // no need to accumulate if the tag is a selfclosing tag 
-                    if(openingTagMatches[2] === "/>"){
-                        if(!unclosedTagExist()){
-                            return tagGroupString
-                        } else {
-                            openingTagMatches = tagText.match(openingTagRegex)
-                            continue
-                        }
+                    if(openingTagMatches[2] === "/>" && !unclosedTagExist()){
+                        return tagGroupString
                     } else {
                         unclosedTagCnt += 1
                     }
@@ -410,7 +407,10 @@ function getTagGroups(tagText: String){
 
             // 2. accumulate closing tags
             do {
-                closingTagMatches = tagText.match(closingTagRegex)
+                // console.log("tagText:", tagText)
+                closingTagMatches = (unclosedTagCnt === 1) 
+                    ? tagText.match(lastClosingTagRegex)
+                    : tagText.match(closingTagRegex)
                 if(closingTagMatches !== null && closingTagMatches[0] !== undefined){
                     tagText = tagText.substring(closingTagMatches[0].length)
                     tagGroupString += closingTagMatches[0]
