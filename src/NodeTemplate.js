@@ -62,40 +62,37 @@ export default class NodeTemplate {
         })
         console.log("finished fragment:", this.fragment)
     
-        // // create node references
-        // const createReferences = (() => {
-        //     // add element references from 'data-tref' and 'id' attributes
-        //     this.refs = {}
-        //     this.ids = {}
-        //     Array.from(this.fragment.childNodes).forEach(tagGroup => {
-        //         iterate(tagGroup, n => {
-        //             let ref = undefined
-        //             if(n.dataset === undefined){
-        //                 ref = n.getAttribute("data-ref")
-        //                 if(ref !== null){
-        //                     this.refs[ref] = n
-        //                 }
-        //             } else {
-        //                 ref = n.dataset.ref
-        //                 if(ref !== undefined){
-        //                     this.refs[ref] = n
-        //                 }
-        //             }
+        // create node references
+        const createReferences = (() => {
+            // add element references from 'data-tref' and 'id' attributes
+            this.refs = {}
+            this.ids = {}
+            Array.from(this.fragment.childNodes).forEach(tagGroup => iterate(tagGroup, n => {
+                // add data-ref references
+                let ref = undefined
+                if(n.dataset === undefined){
+                    ref = n.getAttribute("data-ref")
+                    if(ref !== null){
+                        this.refs[ref] = n
+                    }
+                } else {
+                    ref = n.dataset.ref
+                    if(ref !== undefined){
+                        this.refs[ref] = n
+                    }
+                }
+                // add node id references
+                if (n.id !== "") {
+                    this.ids[n.id] = n
+                }
+            }))
 
-        //             // add node id references
-        //             if (n.id !== "") {
-        //                 this.ids[n.id] = n
-        //             }
-        //         })
-        //     })
-
-        //     // add root reference
-        //     this.root = (this.fragment.childNodes.length === 1)
-        //         ? this.fragment.firstElementChild
-        //         : Array.from(this.fragment.childNodes)
-        // })()
+            // add root reference
+            this.root = (this.fragment.childNodes.length === 1)
+                ? this.fragment.firstElementChild
+                : Array.from(this.fragment.childNodes)
+        })()
     }
-    
     /**
      * About 'DOMStrings' for querys: https://developer.mozilla.org/en-US/docs/Web/API/DOMString
      */
@@ -425,6 +422,7 @@ function getTagGroups(tagText: String){
 
     // check result
     if(tagGroups.length < 1){
+        console.log("tagGroups:", tagGroups)
         throw new Error(`Could not create tag groups for '${tagText}'`)
     } else {
         return tagGroups
@@ -432,18 +430,19 @@ function getTagGroups(tagText: String){
 }
 
 
-let SVGAnchorIndex = 0
-let EBAnchorIndex = 0
-let FOAnchorIndex = 0
+
 const SVGAnchorId = `nodetemplate-svg-anchor-`
 const EBAnchorId = `nodetemplate-eb-anchor-`
 const FOAnchorId = `nodetemplate-fo-anchor-`
 const FOContentAnchorId = `nodetemplate-fo-content-anchor-`
 function handleTagGroup(tagGroup: String, options: any): Node {
-    console.log("-----------------------------------------")
-    console.log("             handleTagGroup              ")
-    console.log("-----------------------------------------")
-    console.log("tagGroup:", tagGroup)
+    let SVGAnchorIndex = 0
+    let EBAnchorIndex = 0
+    let FOAnchorIndex = 0
+    // console.log("-----------------------------------------")
+    // console.log("             handleTagGroup              ")
+    // console.log("-----------------------------------------")
+    // console.log("tagGroup:", tagGroup)
     /* 
         worst tagGroup text cases:
         1.
@@ -501,7 +500,7 @@ function handleTagGroup(tagGroup: String, options: any): Node {
     let { type, addXMLNS } = options
 
     // 1. analyze type
-    console.log("type:", type)
+    // console.log("type:", type)
     if(type === undefined){
         let tagName = getFirstTagName(tagGroup)
 
@@ -583,13 +582,13 @@ function handleTagGroup(tagGroup: String, options: any): Node {
             }
         }
     }
-    console.log("type:", type)
+    // console.log("type:", type)
 
     // 2. add xmlns
     if(addXMLNS === undefined){
         addXMLNS = true
     }
-    console.log("addXMLNS:", addXMLNS)
+    // console.log("addXMLNS:", addXMLNS)
     if(addXMLNS){
         if(type === undefined) throw new Error("Something went wrong in type detection. Variable 'type' should not be undefined.")
         let XMLNS = (type === "html") ? XMLNS_XHTML : XMLNS_SVG
@@ -597,7 +596,7 @@ function handleTagGroup(tagGroup: String, options: any): Node {
         tagGroup = tagGroup.replace(/^(<[a-zA-Z]+(?:\s[^>]*)?)(\sxmlns=["'][^"']*["'])/, `$1`)
         tagGroup = tagGroup.replace(/^(<([a-zA-Z]+))\b((?:[^>]*>.*?)(<\/\2>)+)/, `$1 xmlns="${XMLNS}"$3`)
     }
-    console.log("tagGroup after xmlns:", tagGroup)
+    // console.log("tagGroup after xmlns:", tagGroup)
         
     // 3. split or parse
     if(type === "html"){
@@ -608,8 +607,8 @@ function handleTagGroup(tagGroup: String, options: any): Node {
                 SVGText = match
                 return `<a id="${SVGAnchorId}${SVGAnchorIndex}"></a>`   
             })
-            SVGAnchorIndex++
             if(SVGText !== null){
+                SVGAnchorIndex++
                 let SVGNode = handleTagGroup(SVGText, { type: "svg" })
                 if (SVGNode === null || SVGNode === undefined){
                     throw new Error("Could not parse SVG.")
@@ -625,8 +624,8 @@ function handleTagGroup(tagGroup: String, options: any): Node {
             anchorNode.parentNode.insertBefore(SVG, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
-        console.log("finished HTMLDocument.")
-        console.log("content:", HTMLDocument.body.firstElementChild)
+        // console.log("finished HTMLDocument.")
+        // console.log("content:", HTMLDocument.body.firstElementChild)
         return HTMLDocument.body.firstElementChild
     }
     else if(type === "svg"){
@@ -673,13 +672,15 @@ function handleTagGroup(tagGroup: String, options: any): Node {
                 - add parsed foreignObject content to foreignObjects => handleTagGroup() 
             */
             let fo = getTagGroupByName(tagGroup, "foreignObject", true)
+            
             // remove fo and add replacement anchor
-            console.log("tagGroup before remove fo:", tagGroup)
+            // console.log("tagGroup before remove fo:", tagGroup)
             tagGroup = tagGroup.substring(0, fo.startIndex) + tagGroup.substring(fo.endIndex)
-            console.log("tagGroup after remove fo:", tagGroup)
+            // console.log("tagGroup after remove fo:", tagGroup)
             const beforeFO = tagGroup.slice(0, fo.startIndex)
             const afterFO = tagGroup.slice(fo.startIndex)
             tagGroup = beforeFO.concat(`<a id="${FOAnchorId}${FOAnchorIndex}"></a>`).concat(afterFO)
+            // console.log("tagGroup after add anchor:", tagGroup)
         
             // remove fo content and add replacement anchor 
             const beforeFOContent = fo.tagGroup.slice(0, fo.contentStartIndex)
@@ -688,36 +689,41 @@ function handleTagGroup(tagGroup: String, options: any): Node {
             // parse fo
             FONodes.push(handleTagGroup(fo.tagGroup, { type: "svg" }))
             // parse fo contents
-            console.log("calling getTagGroups with foContent:", fo.content)
-            const FOContentTexts = getTagGroups(fo.content)
-            FOContentNodes.push(FOContentTexts.map(tg => handleTagGroup(tg, { type: "html" })))
-            FOAnchorIndex++
+            // console.log("fo:", fo)
+            if(fo.content.length !== 0){
+                // console.log("calling getTagGroups with fo.content:", fo.content)
+                const FOContentTexts = getTagGroups(fo.content)
+                FOContentNodes.push(FOContentTexts.map(tg => handleTagGroup(tg, { type: "html" })))
+                FOAnchorIndex++
+            }
         }
 
         // parse svg
+        // console.log("parsing SVG:", tagGroup)
         const SVGDocument = parser.parseFromString(tagGroup, "image/svg+xml")
+        // console.log(SVGDocument)
         // add fos 
-        FONodes.forEach((FO, anchorIndex) => {
-            const anchorNode = SVGDocument.getElementById(`${FOAnchorId}${anchorIndex}`)
+        FONodes.forEach((FO, idx) => {
+            const anchorNode = SVGDocument.getElementById(`${FOAnchorId}${idx}`)
             anchorNode.parentNode.insertBefore(FO, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
         // add foContents
-        FOContentNodes.forEach((FOContent, anchorIndex) => {
-            const anchorNode = SVGDocument.getElementById(`${FOContentAnchorId}${anchorIndex}`)
+        FOContentNodes.forEach((FOContent, idx) => {
+            const anchorNode = SVGDocument.getElementById(`${FOContentAnchorId}${idx}`)
             const fragment = window.document.createDocumentFragment()
             FOContent.forEach(x => fragment.appendChild(x))
             anchorNode.parentNode.insertBefore(fragment, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
         // add ebs
-        EBNodes.forEach((EB, anchorIndex) => {
-            const anchorNode = SVGDocument.getElementById(`${EBAnchorId}${anchorIndex}`)
+        EBNodes.forEach((EB, idx) => {
+            const anchorNode = SVGDocument.getElementById(`${EBAnchorId}${idx}`)
             anchorNode.parentNode.insertBefore(EB, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
-        console.log("finished SVGDocument.")
-        console.log("content:", SVGDocument.documentElement)
+        // console.log("finished SVGDocument.")
+        // console.log("content:", SVGDocument.documentElement)
         return SVGDocument.documentElement
     }
 }
