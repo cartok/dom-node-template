@@ -1,12 +1,3 @@
-// add chai to env
-import { should } from "chai"
-import { expect } from "chai"
-should()
-
-// add jquery to env
-import $ from "jquery"
-
-// actual code imports
 import NodeTemplate from "../build/NodeTemplate.js"
 
 const test1 = new NodeTemplate(`
@@ -31,4 +22,3 @@ const test1 = new NodeTemplate(`
     </div>
 `)
 console.dir(test1)
-
