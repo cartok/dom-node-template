@@ -9,16 +9,6 @@ import $ from "jquery"
 // actual code imports
 import NodeTemplate from "../build/NodeTemplate.js"
 
-// const test1 = new NodeTemplate(`
-//     <div>
-//     </div>
-//         <foreignObject>
-//         </foreignObject>
-//     <div>
-//     </div>
-// `)
-// console.dir(test1)
-
 const test1 = new NodeTemplate(`
     <div>
     </div>
@@ -44,3 +34,15 @@ const test1 = new NodeTemplate(`
 `)
 console.dir(test1)
 
+describe("Node Template Tests", () => {
+    describe("XMLNS Tests", () => {
+        const s = new NodeTemplate(`
+            <svg>
+                <canvas data-ref="canvas"></canvas>
+            </svg>
+        `)
+        it("Embedded content should have XHTML namespace.", () => {
+            s.refs.canvas.namespaceURI.should.equal("http://www.w3.org/1999/xhtml")    
+        })
+    })
+})

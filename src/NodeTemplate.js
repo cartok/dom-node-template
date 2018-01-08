@@ -625,13 +625,13 @@ function handleTagGroup(tagGroup: String, options: any): Node {
             let EBText = ""
             tagGroup = tagGroup.replace(/<(?=(audio|canvas|iframe|video))\1\b(?:[^>]*>.*?)(?:<\/\1>)+/, match => {
                 EBText = match
-                return `<a id="${EBAnchorId}${EBAnchorId}"></a>`   
+                return `<a id="${EBAnchorId}${EBAnchorIndex}"></a>`   
             })
             EBAnchorIndex++
             if(EBText !== null){
                 let EBNode = handleTagGroup(EBText, { type: "html" })
                 if (EBNode === null || EBNode === undefined){
-                    throw new Error("Could not parse SVG.")
+                    throw new Error("Could not parse Embedded Content.")
                 }
                 EBNodes.push(EBNode)
             } else {
@@ -732,7 +732,7 @@ function containsFO(tagText: String): Boolean {
     return /<foreignObject/.test(tagText)
 }
 function containsEB(tagText: String): Boolean {
-    return /<(?=audio||canvas||iframe||video)\1/.test(tagText)   
+    return /<(?=(audio|canvas|iframe|video))\1/.test(tagText)   
 }
 /**
  * The iterate function gets a node and a callback function... 
