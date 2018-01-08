@@ -621,11 +621,6 @@ function handleTagGroup(tagGroup: String, options: any): Node {
     }
     else if(type === "svg"){
         const EBNodes = []
-        console.log("-------------------------")
-        console.log(getFirstTagName(tagGroup))
-        const l = !/audio|canvas|iframe|video/.test(getFirstTagName(tagGroup))
-        console.log(l)
-        console.log(tagGroup)
         while(containsEB(tagGroup) && !/audio|canvas|iframe|video/.test(getFirstTagName(tagGroup))){
             let EBText = ""
             tagGroup = tagGroup.replace(/<(?=(audio|canvas|iframe|video))\1\b(?:[^>]*>.*?)(?:<\/\1>)+/, match => {
@@ -713,16 +708,8 @@ function handleTagGroup(tagGroup: String, options: any): Node {
             anchorNode.parentNode.removeChild(anchorNode)
         })
         // add ebs
-        console.log("add EBS:", EBNodes)
-        console.log("nr of EBS:", EBNodes.length)
         EBNodes.forEach((EB, idx) => {
-            console.log(tagGroup)
             const anchorNode = SVGDocument.getElementById(`${EBAnchorId}-${idx}`)
-            console.log(SVGDocument.documentElement)
-            console.log(anchorNode)
-            console.log(anchorNode.parentNode)
-            console.log(anchorNode.prevSibling)
-
             anchorNode.parentNode.insertBefore(EB, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
