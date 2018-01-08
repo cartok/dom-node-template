@@ -426,9 +426,9 @@ function getTagGroups(tagText: String){
 
 
 
-const SVGAnchorId = `nodetemplate-svg-anchor-`
-const EBAnchorId = `nodetemplate-eb-anchor-`
-const FOAnchorId = `nodetemplate-fo-anchor-`
+const SVGAnchorId = `nodetemplate-svg-anchor`
+const EBAnchorId = `nodetemplate-eb-anchor`
+const FOAnchorId = `nodetemplate-fo-anchor`
 const FOContentAnchorId = `nodetemplate-fo-content-anchor-`
 function handleTagGroup(tagGroup: String, options: any): Node {
     let SVGAnchorIndex = 0
@@ -596,7 +596,7 @@ function handleTagGroup(tagGroup: String, options: any): Node {
             let SVGText = undefined
             tagGroup = tagGroup.replace(/(<svg\b(?:[^>]*>.*?)(?:<\/svg>)+)/, match => {
                 SVGText = match
-                return `<a id="${SVGAnchorId}${SVGAnchorIndex}"></a>`   
+                return `<a id="${SVGAnchorId}-${SVGAnchorIndex}"></a>`   
             })
             if(SVGText !== null){
                 SVGAnchorIndex++
@@ -611,7 +611,7 @@ function handleTagGroup(tagGroup: String, options: any): Node {
         }
         const HTMLDocument = parser.parseFromString(tagGroup, "text/html")
         SVGNodes.forEach((SVG, idx) => {
-            const anchorNode = HTMLDocument.getElementById(`${SVGAnchorId}${idx}`)
+            const anchorNode = HTMLDocument.getElementById(`${SVGAnchorId}-${idx}`)
             anchorNode.parentNode.insertBefore(SVG, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
@@ -621,11 +621,16 @@ function handleTagGroup(tagGroup: String, options: any): Node {
     }
     else if(type === "svg"){
         const EBNodes = []
+        console.log("-------------------------")
+        console.log(getFirstTagName(tagGroup))
+        const l = !/audio|canvas|iframe|video/.test(getFirstTagName(tagGroup))
+        console.log(l)
+        console.log(tagGroup)
         while(containsEB(tagGroup) && !/audio|canvas|iframe|video/.test(getFirstTagName(tagGroup))){
             let EBText = ""
             tagGroup = tagGroup.replace(/<(?=(audio|canvas|iframe|video))\1\b(?:[^>]*>.*?)(?:<\/\1>)+/, match => {
                 EBText = match
-                return `<a id="${EBAnchorId}${EBAnchorIndex}"></a>`   
+                return `<a id="${EBAnchorId}-${EBAnchorIndex}"></a>`   
             })
             EBAnchorIndex++
             if(EBText !== null){
@@ -670,13 +675,13 @@ function handleTagGroup(tagGroup: String, options: any): Node {
             // console.log("tagGroup after remove fo:", tagGroup)
             const beforeFO = tagGroup.slice(0, fo.startIndex)
             const afterFO = tagGroup.slice(fo.startIndex)
-            tagGroup = beforeFO.concat(`<a id="${FOAnchorId}${FOAnchorIndex}"></a>`).concat(afterFO)
+            tagGroup = beforeFO.concat(`<a id="${FOAnchorId}-${FOAnchorIndex}"></a>`).concat(afterFO)
             // console.log("tagGroup after add anchor:", tagGroup)
         
             // remove fo content and add replacement anchor 
             const beforeFOContent = fo.tagGroup.slice(0, fo.contentStartIndex)
             const afterFOContent = fo.tagGroup.slice(fo.contentEndIndex)
-            fo.tagGroup = beforeFOContent.concat(`<a id="${FOContentAnchorId}${FOAnchorIndex}"></a>`).concat(afterFOContent)
+            fo.tagGroup = beforeFOContent.concat(`<a id="${FOContentAnchorId}-${FOAnchorIndex}"></a>`).concat(afterFOContent)
             // parse fo
             FONodes.push(handleTagGroup(fo.tagGroup, { type: "svg" }))
             // parse fo contents
@@ -695,21 +700,29 @@ function handleTagGroup(tagGroup: String, options: any): Node {
         // console.log(SVGDocument)
         // add fos 
         FONodes.forEach((FO, idx) => {
-            const anchorNode = SVGDocument.getElementById(`${FOAnchorId}${idx}`)
+            const anchorNode = SVGDocument.getElementById(`${FOAnchorId}-${idx}`)
             anchorNode.parentNode.insertBefore(FO, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
         // add foContents
         FOContentNodes.forEach((FOContent, idx) => {
-            const anchorNode = SVGDocument.getElementById(`${FOContentAnchorId}${idx}`)
+            const anchorNode = SVGDocument.getElementById(`${FOContentAnchorId}-${idx}`)
             const fragment = window.document.createDocumentFragment()
             FOContent.forEach(x => fragment.appendChild(x))
             anchorNode.parentNode.insertBefore(fragment, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })
         // add ebs
+        console.log("add EBS:", EBNodes)
+        console.log("nr of EBS:", EBNodes.length)
         EBNodes.forEach((EB, idx) => {
-            const anchorNode = SVGDocument.getElementById(`${EBAnchorId}${idx}`)
+            console.log(tagGroup)
+            const anchorNode = SVGDocument.getElementById(`${EBAnchorId}-${idx}`)
+            console.log(SVGDocument.documentElement)
+            console.log(anchorNode)
+            console.log(anchorNode.parentNode)
+            console.log(anchorNode.prevSibling)
+
             anchorNode.parentNode.insertBefore(EB, anchorNode)
             anchorNode.parentNode.removeChild(anchorNode)
         })

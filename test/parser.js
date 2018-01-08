@@ -37,9 +37,18 @@ console.dir(test1)
 describe("Node Template Tests", () => {
     describe("XMLNS Tests", () => {
         const s = new NodeTemplate(`
-            <svg>
+            <g>
+                <g>
+                    <rect data-ref="menu-node" width="100" height="100" class="sia-menu-node sia-menu-node-selected"/>
+                    <rect data-ref="menu-items" width="100" height="100" class="sia-menu-items"/>
+                    <text data-ref="label" class="sia-label"></text>
+                    <g data-ref="close-button">
+                        <line x1="20%" y1="20%" x2="80%" y2="80%"/>
+                        <line x1="20%" y1="80%" x2="80%" y2="20%"/>
+                    </g>
+                </g>
                 <canvas data-ref="canvas"></canvas>
-            </svg>
+            </g>
         `)
         it("Embedded content should have XHTML namespace.", () => {
             s.refs.canvas.namespaceURI.should.equal("http://www.w3.org/1999/xhtml")    
