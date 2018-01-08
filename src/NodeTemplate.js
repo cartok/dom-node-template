@@ -51,7 +51,7 @@ export default class NodeTemplate {
         this.text = cleanInputString(tagText)
         this.tagGroups = getTagGroups(this.text)
         // console.log("tagGroups:", this.tagGroups)
-        
+
         // parse
         this.fragment = window.document.createDocumentFragment()
         this.tagGroups.forEach(tg => {
@@ -418,8 +418,7 @@ function getTagGroups(tagText: String){
 
     // check result
     if(tagGroups.length < 1){
-        console.log("tagGroups:", tagGroups)
-        throw new Error(`Could not create tag groups for '${tagText}'`)
+        throw new Error(`Could not create tag groups for "${tagText}". See the 'tagGroups': ${tagGroups}.`)
     } else {
         return tagGroups
     }
@@ -722,7 +721,7 @@ function handleTagGroup(tagGroup: String, options: any): Node {
 
 // helpers (constructor)
 function getFirstTagName(tagText: String): String {
-    console.log("tagText:", tagText)
+    // console.log("tagText:", tagText)
     let matches = tagText.match(/^<([a-zA-Z\d]+)/)
     return (matches !== null) ? matches[1] : undefined
 }
