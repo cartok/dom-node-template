@@ -9,7 +9,6 @@ VALUES_TO_REMOVE.forEach(x => {
 })
 
 const DEFAULT_OPTIONS = {
-
 }
 
 const XMLNS_SVG = "http://www.w3.org/2000/svg"
@@ -17,7 +16,7 @@ const XMLNS_XHTML = "http://www.w3.org/1999/xhtml"
 
 const parser = new window.DOMParser()
 const createDocumentFragment = (window !== undefined && window.document !== undefined && window.document.createRange !== undefined)
-    ? (tagText) => window.document.createRange().createContextualFragment(tagText)
+    ? (tagText: String) => window.document.createRange().createContextualFragment(tagText)
     : (tagText: String) => {
         const parser = new window.DOMParser()
         const __document__ = parser.parseFromString(tagText, "text/html")
@@ -51,16 +50,16 @@ export default class NodeTemplate {
         // prepare input string
         this.text = cleanInputString(tagText)
         this.tagGroups = getTagGroups(this.text)
-        console.log("tagGroups:", this.tagGroups)
-
+        // console.log("tagGroups:", this.tagGroups)
+        
         // parse
         this.fragment = window.document.createDocumentFragment()
         this.tagGroups.forEach(tg => {
             const tagGroupNode = handleTagGroup(tg)
-            console.log("adding tagGroup to the fragment:", tagGroupNode)
+            // console.log("adding tagGroup to the fragment:", tagGroupNode)
             this.fragment.appendChild(tagGroupNode)
         })
-        console.log("finished fragment:", this.fragment)
+        // console.log("finished fragment:", this.fragment)
     
         // create node references
         const createReferences = (() => {
@@ -237,7 +236,7 @@ function cleanInputString(tagText: String, options: any): String {
         // tagText = tagText.replace()
     }
 
-    console.log("cleaned tagText string:", tagText)
+    // console.log("cleaned tagText string:", tagText)
     return tagText
 }
 /*
@@ -355,10 +354,7 @@ function getTagGroups(tagText: String){
 
     // execute tag group creation
     while(tagText.length > 0){
-        const firstTagName = (() => {
-            let matches = tagText.match(/^<([a-zA-Z\d]+)/)
-            return (matches !== null) ? matches[1] : undefined
-        })()
+        const firstTagName = getFirstTagName(tagText)
         if(firstTagName !== undefined){
             let tagGroupString = createTagGroupString(firstTagName, false)
             if(tagGroupString !== undefined){
@@ -367,7 +363,7 @@ function getTagGroups(tagText: String){
                 throw new Error("createTagGroupString(firstTagName) returned 'undefined'.")
             }
         } else {
-            throw new Error("firstTagName is 'undefined'.")
+            throw new Error("firstTagName is 'undefined'. You must have an error in your 'tagText'. Are you missing a closing tag?")
         }
     }
 
@@ -511,75 +507,71 @@ function handleTagGroup(tagGroup: String, options: any): Node {
             type = "html"
         } else if(tagName === "svg" || tagName === "g" || tagName === "foreignObject"){
             type = "svg"
-        } else {
-            if(MUTUAL_TAG_NAMES.includes(tagName)){
-                switch(tagName){
-                    // I. CONCRETE CASES:
-                    // 1. Doesn't matter if it's handled as HTML or SVG, default: HTML. (not so concrete)
-                    case "script":
-                    case "style":
-                        addXMLNS = false
-                        type = "html"
-                        break
-                    // 2. Embedded Content has to be HTML.
-                    case "audio":
-                    case "canvas":
-                    case "iframe":
-                    case "video":
-                        type = "html"
-                        break
-                    // II. INCONCRETE CASES:
-                    // 1. Mutual tags, overridable default: SVG 
-                    case "font":
-                    case "title":
-                        if(options.mutual.a.isHTML){
-                            type = "html"
-                        }
-                        else {
-                            type = "svg"
-                            if(tagName === "title"){
-                                warnAbout("title")
-                            } else {
-                                warnAbout("font")
-                            }
-                        }
-                        break
-                    // 2. Mutual tags, overridable default: HTML 
-                    case "a":
-                        if(options.mutual.a.isSVG){
-                            type = "svg"
-                        }
-                        else {
-                            type = "html"
-                            warnAbout("a")
-                        }
-                        break
-                }
-                function warnAbout(t: String){
-                    console.warn(`You provided an <${t}></${t}> tag as a tag-group (or root node, referring to the string input context).`)
-                    console.warn(`The <${t}></${t}> tag exists in HTML and SVG namespace.`)
-                    console.warn(`In this situation, as default, it will be handled like ${type.toUpperCase()}.`)
-                    if(type === "html"){
-                        console.warn(`It will have xmlns="http://www.w3.org/1999/xhtml" set, and parsed as "text/html" by the 'DOMParser'.`)
-                        console.warn(`You can force SVG creation by passing a true set boolean at "options.mutual.a.isSVG", to the optional parameters object in the constructor call.`)
-                        console.warn(`\nEXAMLPLE:`)
-                        console.warn(`const svgContent = new NodeTemplate(\`<${t}></${t}>\`, { mutual: { ${t}: { isSVG: true } } })`)
-                    } else if(type === "svg"){
-                        console.warn(`It will have xmlns="http://www.w3.org/2000/svg" set, and parsed as "image/svg+xml" by the 'DOMParser'.`)
-                        console.warn(`You can force HTML creation by passing a true set boolean at "options.mutual.a.isHTML", to the optional parameters object in the constructor call.`)
-                        console.warn(`\nEXAMLPLE:`)
-                        console.warn(`const htmlContent = new NodeTemplate(\`<${t}></${t}>\`, { mutual: { ${t}: { isHTML: true } } })`)
-                    }
-                } 
-            } else {
-                if(TAG_NAMES_HTML.includes(tagName)){
+        } else if(MUTUAL_TAG_NAMES.includes(tagName)){
+            switch(tagName){
+                // I. CONCRETE CASES:
+                // 1. Doesn't matter if it's handled as HTML or SVG, default: HTML. (not so concrete)
+                case "script":
+                case "style":
+                    addXMLNS = false
                     type = "html"
-                } else if(TAG_NAMES_SVG.includes(tagName)){
-                    type = "svg"
-                } else {
-                    throw new Error(`Could not detect type for tagName: ${tagName}.`)
-                }
+                    break
+                // 2. Embedded Content has to be HTML.
+                case "audio":
+                case "canvas":
+                case "iframe":
+                case "video":
+                    type = "html"
+                    break
+                // II. INCONCRETE CASES:
+                // 1. Mutual tags, overridable default: SVG 
+                case "font":
+                case "title":
+                    if(options.mutual.a.isHTML){
+                        type = "html"
+                    }
+                    else {
+                        type = "svg"
+                        if(tagName === "title"){
+                            warnAbout("title")
+                        } else {
+                            warnAbout("font")
+                        }
+                    }
+                    break
+                // 2. Mutual tags, overridable default: HTML 
+                case "a":
+                    if(options.mutual.a.isSVG){
+                        type = "svg"
+                    }
+                    else {
+                        type = "html"
+                        warnAbout("a")
+                    }
+                    break
             }
+            function warnAbout(t: String){
+                console.warn(`You provided an <${t}></${t}> tag as a tag-group (or root node, referring to the string input context).`)
+                console.warn(`The <${t}></${t}> tag exists in HTML and SVG namespace.`)
+                console.warn(`In this situation, as default, it will be handled like ${type.toUpperCase()}.`)
+                if(type === "html"){
+                    console.warn(`It will have xmlns="http://www.w3.org/1999/xhtml" set, and parsed as "text/html" by the 'DOMParser'.`)
+                    console.warn(`You can force SVG creation by passing a true set boolean at "options.mutual.a.isSVG", to the optional parameters object in the constructor call.`)
+                    console.warn(`\nEXAMLPLE:`)
+                    console.warn(`const svgContent = new NodeTemplate(\`<${t}></${t}>\`, { mutual: { ${t}: { isSVG: true } } })`)
+                } else if(type === "svg"){
+                    console.warn(`It will have xmlns="http://www.w3.org/2000/svg" set, and parsed as "image/svg+xml" by the 'DOMParser'.`)
+                    console.warn(`You can force HTML creation by passing a true set boolean at "options.mutual.a.isHTML", to the optional parameters object in the constructor call.`)
+                    console.warn(`\nEXAMLPLE:`)
+                    console.warn(`const htmlContent = new NodeTemplate(\`<${t}></${t}>\`, { mutual: { ${t}: { isHTML: true } } })`)
+                }
+            } 
+        } else if(TAG_NAMES_HTML.includes(tagName)){
+            type = "html"
+        } else if(TAG_NAMES_SVG.includes(tagName)){
+            type = "svg"
+        } else {
+            throw new Error(`Could not detect type for tagName: ${tagName}.`)
         }
     }
     // console.log("type:", type)
@@ -730,6 +722,7 @@ function handleTagGroup(tagGroup: String, options: any): Node {
 
 // helpers (constructor)
 function getFirstTagName(tagText: String): String {
+    console.log("tagText:", tagText)
     let matches = tagText.match(/^<([a-zA-Z\d]+)/)
     return (matches !== null) ? matches[1] : undefined
 }
