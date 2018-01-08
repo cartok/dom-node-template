@@ -621,9 +621,9 @@ function handleTagGroup(tagGroup: String, options: any): Node {
     }
     else if(type === "svg"){
         const EBNodes = []
-        while(containsEB(tagGroup) && !/audio||canvas||iframe||video/.test(getFirstTagName(tagGroup))){
-            let EBText = undefined
-            tagGroup = tagGroup.replace(/(<(?=audio||canvas||iframe||video)\1\b(?:[^>]*>.*?)(?:<\/\1>)+)/, match => {
+        while(containsEB(tagGroup) && !/audio|canvas|iframe|video/.test(getFirstTagName(tagGroup))){
+            let EBText = ""
+            tagGroup = tagGroup.replace(/<(?=(audio|canvas|iframe|video))\1\b(?:[^>]*>.*?)(?:<\/\1>)+/, match => {
                 EBText = match
                 return `<a id="${EBAnchorId}${EBAnchorId}"></a>`   
             })
