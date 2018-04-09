@@ -363,6 +363,7 @@ function getTagGroups(tagText: String){
                 throw new Error("createTagGroupString(firstTagName) returned 'undefined'.")
             }
         } else {
+            console.log(tagText)
             throw new Error("firstTagName is 'undefined'. You must have an error in your 'tagText'. Are you missing a closing tag?")
         }
     }
@@ -722,7 +723,7 @@ function handleTagGroup(tagGroup: String, options: any): Node {
 // helpers (constructor)
 function getFirstTagName(tagText: String): String {
     // console.log("tagText:", tagText)
-    let matches = tagText.match(/^<([a-zA-Z\d]+)/)
+    let matches = tagText.match(/<([a-zA-Z\d]+)/)
     return (matches !== null) ? matches[1] : undefined
 }
 function containsSVG(tagText: String): Boolean {
