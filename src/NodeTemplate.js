@@ -48,7 +48,7 @@ export default class NodeTemplate {
         let { svg } = options
         
         // prepare input string
-        this.text = cleanInputString(tagText)
+        this.text = cleanInputString(tagText, { removeComments: true })
         this.tagGroups = getTagGroups(this.text)
         // console.log("tagGroups:", this.tagGroups)
 
@@ -163,13 +163,24 @@ export default class NodeTemplate {
 }
 
 
+
 // @todo: fix parenthesis spaces
 // @feature: replace "" in attribute-values (css)
-// @feature: remove comments
 function cleanInputString(tagText: String, options: any): String {
     options = Object.assign({}, options)
     let { removeComments, replaceAttributeValueQuotes } = options
     
+    if(removeComments){
+        // remove js line comments.
+        tagText = tagText.replace(/\s*\/\/.*?$/gm, "")
+        // remove js multi line comments.
+        // @warning: does not work nested !!
+        tagText = tagText.replace(/\/\*{1,}[^]*?\*\//, "")
+        // remove html comments.
+        // @warning: does not work nested !!
+        tagText = tagText.replace(/\<\!\-\-[^]*?\-\-\>/g, "")
+    }
+
     // remove all newlines, tabs and returns from the tagText string to create one line
     // regex: [\n\t\r]
     // subst: null
@@ -723,7 +734,7 @@ function handleTagGroup(tagGroup: String, options: any): Node {
 // helpers (constructor)
 function getFirstTagName(tagText: String): String {
     // console.log("tagText:", tagText)
-    let matches = tagText.match(/<([a-zA-Z\d]+)/)
+    let matches = tagText.match(/^<([a-zA-Z\d]+)/)
     return (matches !== null) ? matches[1] : undefined
 }
 function containsSVG(tagText: String): Boolean {
