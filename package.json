@@ -36,7 +36,7 @@
     "url": "https://github.com/cartok/dom-node-template"
   },
   "author": "Dennis Weiershäuser <dennis.weiershaeuser@l3p-cv.com>",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "devDependencies": {
     "babel-cli": "*",
     "babel-eslint": "*",
