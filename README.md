@@ -1,56 +1,33 @@
 # DOM-Node-Template
-*A middle way to create html nodes in js by using a template string. Getting a usefull template object.*
+*A middle way to create and work with HTML or SVG (or mixed)*
 
 ## Installation:
 ```npm install dom-node-template```  
-```yarn install dom-node-template```
-
 
 ## Usage
 + import
 ```javascript
 import NodeTemplate from "dom-node-template" 
 ```
-+ create full template: 
++ create template: 
 ```javascript
-new NodeTemplate(`<h1>Title</h1>`)  
+const html = new NodeTemplate(`<h1>Title</h1>`)  
 ```
-+ create minimal template: 
++ append the template:
 ```javascript
-new NodeTemplate(`<h1>Title</h1>`, { nodeOnly: true })
+element.appendChild(html.fragment)
 ```
 
 #### What you get:
 The constructor returns an Object containing your **HTML in a document fragment**. It offers you the **references** of the **root** element if there is one, an all Elements that have the **id** or **data-ref** attribute set.
 ```javasript
 {
-    text = "",                      // Just the original Text.
-    fragment = DocumentFragment,    // Contains all Nodes in the String. Lightweight. No Wrapper needed to append your HTML.
-    root = HTMLElement,             // Reference to the wrapping element if your String contains one.
-    ids = {},                       // References, all Nodes that got 'id' attribute set.
-    refs = {},                      // References, all Nodes that got 'data-ref' attribute set.
+    fragment = DocumentFragment,
+    root = HTMLElement | Array<HTMLElement>,
+    ids = {},                                   // References: All Nodes that got the 'id' attribute set.
+    refs = {},                                  // References: All Nodes that got the 'data-ref' attribute set.
 }
 ```
-
-
-You might be used to...
-
-
-**Advantages:**
-```javascript
-
-const html = new NodeTemplate(`
-    <div id="app-container">
-        <h1>foo</h1>
-        <div id="app-bar">
-
-        </div>
-    </div>
-`)
-
-
-
-
 
 ### Working with jQuery
 ```javascript
@@ -58,21 +35,22 @@ const html = new NodeTemplate(`
     <div id="app-container">
         <h1>foo</h1>
         <div id="app-bar">
-        
+            // ...     
         </div>
     </div>
 `)
-$("#YouCouldHaveUsed li").on("click", () => "the selection API as this")
-$()
+// before
+$("#app-bar").on("click", () => {})
+// after
+$(html.ids["app-bar"]).on("click", () => {})
 ```
-
 
 ### Usage Example:
 #### Definition of a ListView class 
 ```javascript
 /**
  * file: ListView.js
- * -------------------------------------------------------------------------------------------------
+ *
  */
 import NodeTemplate from "dom-node-template"
 
@@ -107,11 +85,12 @@ export default class ListView {
     // ... more methods ...
 }
 ```
+
 #### Implementation of the ListView
 ```javascript
 /**
  * file: appPresenter.js
- * -------------------------------------------------------------------------------------------------
+ *
  */
 import * as appView from "./appView.js"
 import $ from "jquery"
@@ -133,3 +112,17 @@ $(appView.html.refs["something"]).on("click", () => {
 list.add("music")
 
 ```
+
+**Advantages/Comparison (incomplete section):**
+```javascript
+const html = new NodeTemplate(`
+    <div id="app-container">
+        <h1>foo</h1>
+        <div id="app-bar">
+
+        </div>
+    </div>
+`)
+```
+
+
