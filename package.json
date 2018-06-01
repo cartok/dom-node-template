@@ -12,46 +12,46 @@
     "string template",
     "template literal"
   ],
-  "main": "./build/NodeTemplate.js",
+  "main": "./dist/NodeTemplate.js",
   "scripts": {
-    "sound:plock": "play -q -v 0.2 $(find /usr/share/sounds/ -type f -name *device-added* | head -n 1)",
-    "sound:microwave": "play -q -v 0.1 $(find /usr/share/sounds/ -type f -name *complete* | head -n 1)",
-    "sound:trash": "play -q -v 0.15 $(find /usr/share/sounds/ -type f -name *trash*  | head -n 1)",
-    "clean:js": "rm $(find ./build/ -type f -regex '.*\\.[jt]sx?') && npm run sound:trash",
-    "clean:dir": "rm -rf ./build && mkdir build && npm run sound:trash",
-    "babelrc:build": "cp ./.babelrc.build ./.babelrc",
-    "babelrc:mocha": "cp ./.babelrc.mocha ./.babelrc",
-    "babel": "npm install && babel --out-dir ./build ./src",
-    "build": "clear; npm run clean:dir && npm run babelrc:build && npm run babel && npm run sound:microwave",
-    "build:server": "npm run clean:dir && npm run babelrc:build && npm run babel",
-    "test": "clear; npm install && npm run clean:dir && npm run babelrc:mocha && npm run babel && mocha --require babel-core/register --require jsdom-global/register --",
-    "test:inspect": "clear; npm run clean:dir && npm run babelrc:mocha && npm run babel && mocha --require babel-core/register --require jsdom-global/register --inspect-brk --watch --",
+    "babelrc:es5": "cp ./.babelrc.es5 ./.babelrc",
+    "babelrc:es6": "cp ./.babelrc.es6 ./.babelrc",
+    "transpile": "npm install && babel --out-dir ./dist ./src",
+    "build:es5": "npm run babelrc:es5 && npm run transpile",
+    "build:es6": "npm run babelrc:es6 && npm run transpile",
+    "build:webpack": "npm run babelrc:es5 && webpack --mode=production",
+    "build:all": "npm run build:webpack && npm run build:es6",
+    "test": "npm run build:es5 && mocha --require babel-core/register --require jsdom-global/register --",
+    "test:inspect": "npm run builds:es5 && mocha --require babel-core/register --require jsdom-global/register --inspect-brk --watch --",
     "test:monitor": "nodemon -x \"npm run test\"",
-    "test:all": "clear; npm run clean:dir && npm run babelrc:mocha && npm run babel && mocha --require babel-core/register --require jsdom-global/register && npm run sound:plock",
+    "test:all": "npm run build:es5 && mocha --require babel-core/register --require jsdom-global/register",
     "test:all:monitor": "nodemon -x \"npm run test:all\"",
-    "prepublishOnly": "npm run test:all && npm run  build"
+    "prepublishOnly": "npm run test:all && npm run build:all"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/cartok/dom-node-template"
   },
-  "author": "Dennis Weiershäuser <dennis.weiershaeuser@l3p-cv.com>",
+  "author": "Dennis Weiershäuser <dennis.weiershaeuser@informatik.hs-fulda.de>",
   "license": "Apache-2.0",
   "devDependencies": {
     "babel-cli": "^6.26.x",
     "babel-eslint": "^8.2.x",
+    "babel-loader": "^7.1.4",
     "babel-plugin-transform-flow-strip-types": "^6.22.x",
     "babel-preset-env": "^1.7.x",
     "chai": "^4.x.x",
     "eslint": "^4.x.x",
     "eslint-plugin-flowtype": "^2.48.x",
-    "flow-bin": "^0.73.x",
+    "flow-bin": "^0.73.0",
     "http-server": "^0.10.x",
     "jquery": "^3.x.x",
     "jsdom": "^11.11.x",
     "jsdom-global": "^3.0.x",
     "mocha": "^5.2.x",
-    "nodemon": "^1.17.x"
+    "nodemon": "^1.17.x",
+    "webpack": "^4.10.2",
+    "webpack-cli": "^2.1.4"
   },
   "dependencies": {
     "html-tag-names": "^1.1.x",
@@ -59,8 +59,6 @@
   },
   "nodemonConfig": {
     "ignore": [
-      "build",
-      "built",
       "dist",
       "bin",
       "node_modules"
