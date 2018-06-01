@@ -1,16 +1,6 @@
 /build/
-/built/
-/static/
-/dist/
-
 /node_modules/
 
-README.md.advancedexample
-
-package-lock.json
 yarn-error-log
-yarn.lock
 
 .babelrc
-
-/thesis/
