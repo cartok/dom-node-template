@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "html-tag-names": "^1.1.x",
-    "svg-tag-names": "*"
+    "svg-tag-names": "^1.1.x"
   },
   "nodemonConfig": {
     "ignore": [
