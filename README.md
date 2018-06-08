@@ -5,9 +5,13 @@
 ```npm install dom-node-template```  
 
 ## Usage
-+ import
++ module import
 ```javascript
 import NodeTemplate from "dom-node-template" 
+```
++ html import
+```html
+<script src="https://cdn.jsdelivr.net/npm/dom-node-template/dist/bundle.js"></script> 
 ```
 + create template: 
 ```javascript
