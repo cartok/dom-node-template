@@ -7,18 +7,7 @@
         
         // root
         "static": true,         
-        // "build": true,         
-        "built": true,         
-        "dist": true,         
-        "node_modules": true,
-        "__pycache__": true, 
-
-        // filetype
-        "*.py" : true,
-
-        // specific
-        "package-lock.json": true,
-        "yarn.lock": true
+        "node_modules": true
     },
     "search.exclude": {
         // recursive
@@ -32,10 +21,6 @@
         "built": true,         
         "dist": true,                  
         "node_modules": true,
-        "__pycache__": true, 
-
-        // filetype
-        "*.py" : true,
 
         // specific
         "package-lock.json": true,

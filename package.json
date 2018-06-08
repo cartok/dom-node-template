@@ -16,7 +16,7 @@
   "scripts": {
     "babelrc:es5": "cp ./.babelrc.es5 ./.babelrc",
     "babelrc:es6": "cp ./.babelrc.es6 ./.babelrc",
-    "transpile": "npm install && babel --out-dir ./dist ./src",
+    "transpile": "npm install &&https://cdn.jsdelivr.net/npm/dom-node-template/dist/bundle.js babel --out-dir ./dist ./src",
     "build:es5": "npm run babelrc:es5 && npm run transpile",
     "build:es6": "npm run babelrc:es6 && npm run transpile",
     "build:webpack": "npm run babelrc:es5 && webpack --mode=production",
