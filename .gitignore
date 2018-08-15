@@ -1,5 +1,5 @@
 /dist/
-/.vscode/
+/build/
 /node_modules/
 
 yarn-error-log

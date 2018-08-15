@@ -14,6 +14,10 @@ const DEFAULT_OPTIONS = {
 const XMLNS_SVG = "http://www.w3.org/2000/svg"
 const XMLNS_XHTML = "http://www.w3.org/1999/xhtml"
 
+// https://www.456bereastreet.com/archive/201005/void_empty_elements_and_self-closing_start_tags_in_html/
+// http://jkorpela.fi/html/empty.html#html
+const EMPTY_TAGS = [ "img", "input", "br", "hr", "link", "frame", "col", "area", "base", "basefont", "meta", "param", "isindex" ]
+    
 const parser = new window.DOMParser()
 const createDocumentFragment = (window !== undefined && window.document !== undefined && window.document.createRange !== undefined)
     ? (tagText: String) => window.document.createRange().createContextualFragment(tagText)
@@ -240,9 +244,6 @@ function cleanInputString(tagText: String, options: any): String {
     // subst: $1>
     tagText = tagText.replace(/([\w-_]+="[\w\s-_]+")(\s{2,})>/g, "$1>")
     
-    if(removeComments){
-        // tagText = tagText.replace()
-    }
     if(replaceAttributeValueQuotes){
         // tagText = tagText.replace()
     }
@@ -387,7 +388,10 @@ function getTagGroups(tagText: String){
         let unclosedTagCnt = 0
         const unclosedTagExist = () => unclosedTagCnt !== 0
         
+        // opening tag regex matches (braces):
+        // [<div><h1></h1><]/div
         const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
+        const emptyOpeningTagRegex = new RegExp(`^(<${firstTagName}.*?(\\/)?>)`)
         const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
         const lastClosingTagRegex = new RegExp(`^(<\/${firstTagName}[^>]*?>)`)
 
@@ -395,24 +399,39 @@ function getTagGroups(tagText: String){
             let openingTagMatches = undefined
             let closingTagMatches = undefined
                 
-            // 1. accumulate opening tags
+            // 1. accumulate opening tags (opening tag chain like [<div><h1></h1><]/div>)
             do {
+                // special 1: if the tag is an empty tag, just match it and return
+                if(EMPTY_TAGS.includes(firstTagName)){
+                    openingTagMatches = tagText.match(emptyOpeningTagRegex)
+                    if(openingTagMatches !== null && openingTagMatches[0] !== undefined){
+                        tagText = tagText.substring(openingTagMatches[0].length)
+                        return openingTagMatches[0]
+                    } else {
+                        throw new Error(`Could not match empty tag <${firstTagName}>.`)
+                    }
+                }
                 openingTagMatches = tagText.match(openingTagRegex)
                 if(openingTagMatches !== null && openingTagMatches[0] !== undefined){
                     tagText = tagText.substring(openingTagMatches[0].length)
                     tagGroupString += openingTagMatches[0]
-                    // no need to accumulate if the tag is a selfclosing tag 
+                    // special 2: no need to accumulate if the tag is a selfclosing tag or noclosing tag
                     if(openingTagMatches[2] === "/>" && !unclosedTagExist()){
                         return tagGroupString
                     } else {
                         unclosedTagCnt += 1
                     }
+                } else if(unclosedTagCnt === 0){
+                    throw new Error(`Could not match <${firstTagName}> as empty, selfclosing or normal opening tag.`)
                 }
             } while(openingTagMatches !== null && openingTagMatches[0] !== undefined)
 
             // 2. accumulate closing tags
+            // special error handling: ran into infinite loops when passing <img> tag 
+            // that neither needs to be closed nor to be selfclosing.
+            // => check progression with a counter, throw error.
+            let progress = false
             do {
-                // console.log("tagText:", tagText)
                 closingTagMatches = (unclosedTagCnt === 1) 
                     ? tagText.match(lastClosingTagRegex)
                     : tagText.match(closingTagRegex)
@@ -420,6 +439,10 @@ function getTagGroups(tagText: String){
                     tagText = tagText.substring(closingTagMatches[0].length)
                     tagGroupString += closingTagMatches[0]
                     unclosedTagCnt -= 1
+                    progress = true
+                }
+                if(!progress){
+                    throw new Error("Could not progress when gathering closing tags.")
                 }
             } while(closingTagMatches !== null && closingTagMatches[0] !== undefined)
 

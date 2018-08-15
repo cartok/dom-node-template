@@ -42,9 +42,11 @@ export default class NodeTemplate {
 
         // merge default options
         options = Object.assign({}, DEFAULT_OPTIONS, options);
-        let { svg } = options;
+        var _options = options;
+        let svg = _options.svg;
 
         // prepare input string
+
         this.text = cleanInputString(tagText, { removeComments: true });
         this.tagGroups = getTagGroups(this.text);
         // console.log("tagGroups:", this.tagGroups)
@@ -159,7 +161,10 @@ export default class NodeTemplate {
 // @feature: replace "" in attribute-values (css)
 function cleanInputString(tagText, options) {
     options = Object.assign({}, options);
-    let { removeComments, replaceAttributeValueQuotes } = options;
+    var _options2 = options;
+    let removeComments = _options2.removeComments,
+        replaceAttributeValueQuotes = _options2.replaceAttributeValueQuotes;
+
 
     if (removeComments) {
         // remove js line comments.
@@ -231,9 +236,6 @@ function cleanInputString(tagText, options) {
     // subst: $1>
     tagText = tagText.replace(/([\w-_]+="[\w\s-_]+")(\s{2,})>/g, "$1>");
 
-    if (removeComments) {
-        // tagText = tagText.replace()
-    }
     if (replaceAttributeValueQuotes) {}
     // tagText = tagText.replace()
 
@@ -402,13 +404,25 @@ function getTagGroups(tagText) {
             } while (openingTagMatches !== null && openingTagMatches[0] !== undefined);
 
             // 2. accumulate closing tags
+            // special error handling: ran into infinite loops when passing <img> tag 
+            // that neither needs to be closed nor to be selfclosing.
+            // => check progression with a counter, throw error.
+            let progress = false;
             do {
-                // console.log("tagText:", tagText)
+                console.log("tagText:", tagText);
                 closingTagMatches = unclosedTagCnt === 1 ? tagText.match(lastClosingTagRegex) : tagText.match(closingTagRegex);
                 if (closingTagMatches !== null && closingTagMatches[0] !== undefined) {
                     tagText = tagText.substring(closingTagMatches[0].length);
                     tagGroupString += closingTagMatches[0];
                     unclosedTagCnt -= 1;
+                    progress = true;
+                }
+                if (!progress) {
+                    console.error("unclosedTagCnt:", unclosedTagCnt);
+                    console.error("firstTagName:", firstTagName);
+                    console.error("tagGroupString:", tagGroupString);
+                    console.error("tagText:", tagText);
+                    return;
                 }
             } while (closingTagMatches !== null && closingTagMatches[0] !== undefined);
         } while (unclosedTagExist());
@@ -486,10 +500,13 @@ function handleTagGroup(tagGroup, options) {
         </tag>
     */
     options = Object.assign({}, options);
-    let { type, addXMLNS } = options;
+    var _options3 = options;
+    let type = _options3.type,
+        addXMLNS = _options3.addXMLNS;
 
     // 1. analyze type
     // console.log("type:", type)
+
     if (type === undefined) {
         let tagName = getFirstTagName(tagGroup);
 
