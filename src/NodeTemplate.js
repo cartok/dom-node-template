@@ -251,7 +251,7 @@ function cleanInputString(tagText: String, options: any): String {
     return tagText
 }
 /*
-
+    
     <div></div>
     <foreignObject>
         <div></div>
