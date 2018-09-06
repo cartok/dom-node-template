@@ -1,4 +1,5 @@
 /*
+    https://brendaneich.com/
     IDEA: multiline commentable regex 
     /abc    # comment one
     def     # comment two
@@ -25,7 +26,7 @@
         anotherthing    \# no comment spaces and hashtag should remain
     regex: [\t\ ]*(?<!\\)\#.*
     test:  \# no comment followed by # a comment
-    
+
 */
 // export default class Regext {
 class Regext {
