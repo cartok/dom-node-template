@@ -1,6 +1,6 @@
 {
   "name": "dom-node-template",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "create usefull html or svg element wrapper object with es6 template string.",
   "keywords": [
     "dom",
@@ -12,7 +12,7 @@
     "string template",
     "template literal"
   ],
-  "main": "./dist/NodeTemplate.js",
+  "main": "./build/NodeTemplate.js",
   "scripts": {
     "babelrc:es5": "cp ./.babelrc.es5 ./.babelrc",
     "babelrc:es6": "cp ./.babelrc.es6 ./.babelrc",
@@ -35,11 +35,14 @@
   "author": "Dennis Weiershäuser <dennis.weiershaeuser@informatik.hs-fulda.de>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "babel-cli": "^6.26.x",
-    "babel-eslint": "^8.2.x",
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^8.2.3",
     "babel-loader": "^7.1.4",
-    "babel-plugin-transform-flow-strip-types": "^6.22.x",
-    "babel-preset-env": "^1.7.x",
+    "babel-plugin-transform-es2015-destructuring": "^6.23.0",
+    "babel-plugin-transform-es2015-parameters": "^6.24.1",
+    "babel-plugin-transform-es2015-spread": "^6.22.0",
+    "babel-plugin-transform-flow-strip-types": "^6.22.0",
+    "babel-preset-env": "^1.7.0",
     "chai": "^4.x.x",
     "eslint": "^4.x.x",
     "eslint-plugin-flowtype": "^2.48.x",
