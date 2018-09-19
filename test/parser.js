@@ -7,7 +7,7 @@ should()
 import $ from "jquery"
 
 // actual code imports
-import NodeTemplate from "../build/NodeTemplate.js"
+import NodeTemplate from "../dist/NodeTemplate.js"
 
 const test1 = new NodeTemplate(`
     <div>

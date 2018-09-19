@@ -7,7 +7,7 @@ should()
 import $ from "jquery"
 
 // actual code imports
-import NodeTemplate from "../build/NodeTemplate.js"
+import NodeTemplate from "../dist/NodeTemplate.js"
 
 describe("Node Template Tests", () => {
     describe("create a node and validate its state.", () => {
