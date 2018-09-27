@@ -12,7 +12,7 @@
     "string template",
     "template literal"
   ],
-  "main": "./build/NodeTemplate.js",
+  "main": "./dist/NodeTemplate.js",
   "scripts": {
     "babelrc:es5": "cp ./.babelrc.es5 ./.babelrc",
     "babelrc:es6": "cp ./.babelrc.es6 ./.babelrc",
