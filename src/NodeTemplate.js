@@ -1,5 +1,5 @@
-import TAG_NAMES_HTML from "html-tag-names"
-import TAG_NAMES_SVG from "svg-tag-names"
+import TAG_NAMES_HTML from "@cartok/html-tag-names"
+import TAG_NAMES_SVG from "@cartok/svg-tag-names"
 
 const MUTUAL_TAG_NAMES = TAG_NAMES_HTML.filter(n => TAG_NAMES_SVG.find(m => m === n) !== undefined)
 const VALUES_TO_REMOVE = [ "svg", "image", "style", "script" ]

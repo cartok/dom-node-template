@@ -57,8 +57,8 @@
     "webpack-cli": "^2.1.4"
   },
   "dependencies": {
-    "html-tag-names": "^1.1.x",
-    "svg-tag-names": "^1.1.x"
+    "@cartok/html-tag-names": "^1.1.4",
+    "@cartok/svg-tag-names": "^1.1.2"
   },
   "nodemonConfig": {
     "ignore": [
