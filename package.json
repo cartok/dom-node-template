@@ -1,6 +1,6 @@
 {
   "name": "dom-node-template",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "main": "./dist/NodeTemplate.js",
   "description": "usefull and performant way to create html/svg elements",
   "keywords": [
