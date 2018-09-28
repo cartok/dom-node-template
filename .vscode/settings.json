@@ -6,7 +6,7 @@
         "**/node_modules": false,
         
         // root
-        "dist": true,         
+        "dist": false,         
         "node_modules": false
     },
     "search.exclude": {
