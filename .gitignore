@@ -1,7 +1,6 @@
 /dist/
-/build/
+/mochawesome-report/
 /node_modules/
 
-yarn-error-log
-
 .babelrc
+yarn-error-log

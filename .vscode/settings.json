@@ -3,11 +3,11 @@
         // recursive
         "**/.awcache": true,    
         "**/.git": true,        
-        "**/node_modules": true,
+        "**/node_modules": false,
         
         // root
-        "static": true,         
-        "node_modules": true
+        "dist": true,         
+        "node_modules": false
     },
     "search.exclude": {
         // recursive
@@ -15,10 +15,7 @@
         "**/.git": true,        
         "**/node_modules": true,
         
-        // root
-        "static": true,
-        "build": true,         
-        "built": true,         
+        // root      
         "dist": true,                  
         "node_modules": true,
 

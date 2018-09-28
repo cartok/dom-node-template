@@ -1,12 +1,2 @@
-[ignore]
-.*/static/.*
-.*/build/.*
-.*/built/.*
-.*/dist/.*
-.*/node_modules/.*
-
 [include]
-
-[libs]
-
-[options]
+.*/src/.*
