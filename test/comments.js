@@ -33,7 +33,6 @@ const test1 = new NodeTemplate(`
     <div>
     </div>
 `)
-console.dir(test1)
 
 describe("Remove Comments Test", () => {
     describe("........", () => {

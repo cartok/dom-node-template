@@ -32,7 +32,6 @@ const test1 = new NodeTemplate(`
     <div>
     </div>
 `)
-console.dir(test1)
 
 describe("Node Template Tests", () => {
     describe("XMLNS Tests", () => {

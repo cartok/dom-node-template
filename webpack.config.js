@@ -2,13 +2,11 @@ const webpack = require("webpack")
 const path = require("path")
 
 module.exports = {
-    // entry:  path.resolve(__dirname, "src/index"),
     output: {
         filename: "bundle.js",
         sourceMapFilename : "[file].map",
-        path: path.resolve(__dirname, "dist"),
     },
-    devtool: "inline-source-map",
+    devtool: "source-map",
     module: {
         rules: [
             {
@@ -21,9 +19,6 @@ module.exports = {
         ],
     },
     plugins: [
-        new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
-        }),
         new webpack.optimize.OccurrenceOrderPlugin(true),
     ],
 }

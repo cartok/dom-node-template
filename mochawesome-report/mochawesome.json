@@ -1,0 +1,305 @@
+{
+  "stats": {
+    "suites": 8,
+    "tests": 6,
+    "passes": 6,
+    "pending": 0,
+    "failures": 0,
+    "start": "2018-09-28T10:23:02.152Z",
+    "end": "2018-09-28T10:23:02.168Z",
+    "duration": 16,
+    "testsRegistered": 6,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false,
+    "passPercentClass": "success",
+    "pendingPercentClass": "danger"
+  },
+  "suites": {
+    "uuid": "91c6c126-e5b1-4720-890b-d72b5d7dc66c",
+    "title": "",
+    "fullFile": "",
+    "file": "",
+    "beforeHooks": [],
+    "afterHooks": [],
+    "tests": [],
+    "suites": [
+      {
+        "uuid": "97411130-79bb-42af-ab92-2bbb2257a69d",
+        "title": "Remove Comments Test",
+        "fullFile": "/home/cartok/l3p/dom-node-template/test/comments.js",
+        "file": "/test/comments.js",
+        "beforeHooks": [],
+        "afterHooks": [],
+        "tests": [],
+        "suites": [
+          {
+            "uuid": "b55663d4-cd61-4c3c-ab5a-ebe79bb4d159",
+            "title": "........",
+            "fullFile": "/home/cartok/l3p/dom-node-template/test/comments.js",
+            "file": "/test/comments.js",
+            "beforeHooks": [],
+            "afterHooks": [],
+            "tests": [
+              {
+                "title": "Should have removed comments",
+                "fullTitle": "Remove Comments Test ........ Should have removed comments",
+                "timedOut": false,
+                "duration": 1,
+                "state": "passed",
+                "speed": "fast",
+                "pass": true,
+                "fail": false,
+                "pending": false,
+                "code": "s.refs.canvas.namespaceURI.should.equal(\"http://www.w3.org/1999/xhtml\");",
+                "err": {},
+                "isRoot": false,
+                "uuid": "700c4a3a-1220-4d8a-980d-9f1045ef3246",
+                "isHook": false,
+                "skipped": false
+              }
+            ],
+            "suites": [],
+            "passes": [
+              "700c4a3a-1220-4d8a-980d-9f1045ef3246"
+            ],
+            "failures": [],
+            "pending": [],
+            "skipped": [],
+            "duration": 1,
+            "root": false,
+            "rootEmpty": false,
+            "_timeout": 2000
+          }
+        ],
+        "passes": [],
+        "failures": [],
+        "pending": [],
+        "skipped": [],
+        "duration": 0,
+        "root": false,
+        "rootEmpty": false,
+        "_timeout": 2000
+      },
+      {
+        "uuid": "9c747015-c084-43f8-a869-a53cf8c3ce3e",
+        "title": "Node Template Tests",
+        "fullFile": "/home/cartok/l3p/dom-node-template/test/import.js",
+        "file": "/test/import.js",
+        "beforeHooks": [],
+        "afterHooks": [],
+        "tests": [],
+        "suites": [
+          {
+            "uuid": "f44c9587-2356-47e8-9d11-16e1015dc1ea",
+            "title": "create a node and validate its state.",
+            "fullFile": "/home/cartok/l3p/dom-node-template/test/import.js",
+            "file": "/test/import.js",
+            "beforeHooks": [],
+            "afterHooks": [],
+            "tests": [
+              {
+                "title": "should create node template",
+                "fullTitle": "Node Template Tests create a node and validate its state. should create node template",
+                "timedOut": false,
+                "duration": 1,
+                "state": "passed",
+                "speed": "fast",
+                "pass": true,
+                "fail": false,
+                "pending": false,
+                "code": "s.text.should.be.an(\"string\");\n// s.fragment.should.be.an(\"object\")\n// s.root.should.be.an(\"object\")\ns.refs.should.be.an(\"object\");\ns.ids.should.be.an(\"object\");",
+                "err": {},
+                "isRoot": false,
+                "uuid": "f689f150-8f2a-402f-8ae1-3adab4d3be7f",
+                "isHook": false,
+                "skipped": false
+              },
+              {
+                "title": "should have 1 id",
+                "fullTitle": "Node Template Tests create a node and validate its state. should have 1 id",
+                "timedOut": false,
+                "duration": 0,
+                "state": "passed",
+                "speed": "fast",
+                "pass": true,
+                "fail": false,
+                "pending": false,
+                "code": "Object.keys(s.ids).length.should.equal(1);",
+                "err": {},
+                "isRoot": false,
+                "uuid": "34af7b04-9f47-42a3-8806-388f2ceb0818",
+                "isHook": false,
+                "skipped": false
+              },
+              {
+                "title": "should have a h1 tag 'hello kitty' as text node as first child",
+                "fullTitle": "Node Template Tests create a node and validate its state. should have a h1 tag 'hello kitty' as text node as first child",
+                "timedOut": false,
+                "duration": 1,
+                "state": "passed",
+                "speed": "fast",
+                "pass": true,
+                "fail": false,
+                "pending": false,
+                "code": "(0, _jquery2.default)(s.ids[\"container\"].firstElementChild).text().should.equal(\"hello kitty\");",
+                "err": {},
+                "isRoot": false,
+                "uuid": "2267dffd-fc8e-4d07-a9b1-43d9e054ca63",
+                "isHook": false,
+                "skipped": false
+              }
+            ],
+            "suites": [],
+            "passes": [
+              "f689f150-8f2a-402f-8ae1-3adab4d3be7f",
+              "34af7b04-9f47-42a3-8806-388f2ceb0818",
+              "2267dffd-fc8e-4d07-a9b1-43d9e054ca63"
+            ],
+            "failures": [],
+            "pending": [],
+            "skipped": [],
+            "duration": 2,
+            "root": false,
+            "rootEmpty": false,
+            "_timeout": 2000
+          }
+        ],
+        "passes": [],
+        "failures": [],
+        "pending": [],
+        "skipped": [],
+        "duration": 0,
+        "root": false,
+        "rootEmpty": false,
+        "_timeout": 2000
+      },
+      {
+        "uuid": "695aaf19-6ccf-4875-81d4-0dcbee055745",
+        "title": "Node Template Tests",
+        "fullFile": "/home/cartok/l3p/dom-node-template/test/parser.js",
+        "file": "/test/parser.js",
+        "beforeHooks": [],
+        "afterHooks": [],
+        "tests": [],
+        "suites": [
+          {
+            "uuid": "4b8bbc4c-be8e-4c24-a0a8-2ff96556ff62",
+            "title": "XMLNS Tests",
+            "fullFile": "/home/cartok/l3p/dom-node-template/test/parser.js",
+            "file": "/test/parser.js",
+            "beforeHooks": [],
+            "afterHooks": [],
+            "tests": [
+              {
+                "title": "Embedded content should have XHTML namespace.",
+                "fullTitle": "Node Template Tests XMLNS Tests Embedded content should have XHTML namespace.",
+                "timedOut": false,
+                "duration": 0,
+                "state": "passed",
+                "speed": "fast",
+                "pass": true,
+                "fail": false,
+                "pending": false,
+                "code": "s.refs.canvas.namespaceURI.should.equal(\"http://www.w3.org/1999/xhtml\");",
+                "err": {},
+                "isRoot": false,
+                "uuid": "4600c5cc-4102-4fa6-8065-4fcb1f477b61",
+                "isHook": false,
+                "skipped": false
+              }
+            ],
+            "suites": [],
+            "passes": [
+              "4600c5cc-4102-4fa6-8065-4fcb1f477b61"
+            ],
+            "failures": [],
+            "pending": [],
+            "skipped": [],
+            "duration": 0,
+            "root": false,
+            "rootEmpty": false,
+            "_timeout": 2000
+          }
+        ],
+        "passes": [],
+        "failures": [],
+        "pending": [],
+        "skipped": [],
+        "duration": 0,
+        "root": false,
+        "rootEmpty": false,
+        "_timeout": 2000
+      },
+      {
+        "uuid": "f02a5b5d-7bce-4eaa-8481-8633e834aee1",
+        "title": "Test some specific elements",
+        "fullFile": "/home/cartok/l3p/dom-node-template/test/specificElements.js",
+        "file": "/test/specificElements.js",
+        "beforeHooks": [],
+        "afterHooks": [],
+        "tests": [],
+        "suites": [
+          {
+            "uuid": "8aaa3ed3-23a0-429a-8b87-e65bbfa15e00",
+            "title": "parse <img> without causing buffer overflow",
+            "fullFile": "/home/cartok/l3p/dom-node-template/test/specificElements.js",
+            "file": "/test/specificElements.js",
+            "beforeHooks": [],
+            "afterHooks": [],
+            "tests": [
+              {
+                "title": "should create node template",
+                "fullTitle": "Test some specific elements parse <img> without causing buffer overflow should create node template",
+                "timedOut": false,
+                "duration": 0,
+                "state": "passed",
+                "speed": "fast",
+                "pass": true,
+                "fail": false,
+                "pending": false,
+                "code": "",
+                "err": {},
+                "isRoot": false,
+                "uuid": "1db26c8b-9cfa-4357-b57a-da370eaf6e01",
+                "isHook": false,
+                "skipped": false
+              }
+            ],
+            "suites": [],
+            "passes": [
+              "1db26c8b-9cfa-4357-b57a-da370eaf6e01"
+            ],
+            "failures": [],
+            "pending": [],
+            "skipped": [],
+            "duration": 0,
+            "root": false,
+            "rootEmpty": false,
+            "_timeout": 2000
+          }
+        ],
+        "passes": [],
+        "failures": [],
+        "pending": [],
+        "skipped": [],
+        "duration": 0,
+        "root": false,
+        "rootEmpty": false,
+        "_timeout": 2000
+      }
+    ],
+    "passes": [],
+    "failures": [],
+    "pending": [],
+    "skipped": [],
+    "duration": 0,
+    "root": true,
+    "rootEmpty": true,
+    "_timeout": 2000
+  },
+  "copyrightYear": 2018
+}
