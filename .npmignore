@@ -5,9 +5,9 @@
 /src/
 /test/
 
-.babelrc
 .eslintrc.js
 .flowconfig
 .gitignore 
 .webpack.config.js
+babel.config.*js
 yarn-error-log

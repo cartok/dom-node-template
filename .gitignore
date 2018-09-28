@@ -2,5 +2,5 @@
 /mochawesome-report/
 /node_modules/
 
-.babelrc
+babel.config.*js
 yarn-error-log
