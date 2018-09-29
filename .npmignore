@@ -2,7 +2,6 @@
 /benchmark/
 /mochawesome-report/
 /node_modules/
-/src/
 /test/
 
 .eslintrc.js
