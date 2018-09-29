@@ -21,7 +21,7 @@
     "url": "https://github.com/cartok/dom-node-template"
   },
   "author": "Dennis Weiershäuser <dennis.weiershaeuser@informatik.hs-fulda.de>",
-  "license": "MIT License",
+  "license": "MIT",
   "scripts": {
     "babelrc:es5": "cp ./babel.config.es5.js ./babel.config.js",
     "babelrc:es6": "cp ./babel.config.es6.js ./babel.config.js",
