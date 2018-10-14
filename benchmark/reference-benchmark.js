@@ -191,3 +191,45 @@ let ids = {
     "rec-child-end": fragment.getElementById("rec-child-end"),
     "rec-sibling-end": fragment.getElementById("rec-sibling-end"),
 }
+
+template = () => {
+    return <div id="rec-start" data-ref="rec-start">
+        <div>
+            <div>
+                <div>
+                    <div>
+                        <div id="rec-child-end" data-ref="rec-child-end"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div id="rec-sibling-end" data-ref="rec-sibling-end"></div>
+}
+class Foo extends React.Component {
+    render(){
+        return (
+            <div id="rec-start" data-ref="rec-start">
+                <div>
+                    <div>
+                        <div>
+                            <div>
+                                <div id="rec-child-end" data-ref="rec-child-end"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div id="rec-sibling-end" data-ref="rec-sibling-end"></div>
+        )
+    }
+}
+new Foo()
