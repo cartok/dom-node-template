@@ -14,4 +14,4 @@ const plugins = [
     "@babel/plugin-transform-flow-strip-types", 
 ]
 
-module.exports = { presets, plugins };
+module.exports = { presets, plugins }

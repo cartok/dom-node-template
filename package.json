@@ -23,6 +23,7 @@
   "author": "Dennis Weiershäuser <dennis.weiershaeuser@informatik.hs-fulda.de>",
   "license": "MIT",
   "scripts": {
+    "clean": "rm -rf ./dist && mkdir ./dist",
     "babelrc:es5": "cp ./babel.config.es5.js ./babel.config.js",
     "babelrc:es6": "cp ./babel.config.es6.js ./babel.config.js",
     "babel": "npm install -d && babel --out-dir ./dist ./src",
@@ -30,7 +31,7 @@
     "build:es6": "npm run babelrc:es6 && npm run babel",
     "build:webpack": "npm run babelrc:es5 && npm install -d && webpack --mode=production",
     "build:all": "npm run build:webpack && npm run build:es6",
-    "test": "npm run build:es5 && mocha -R mochawesome -r @babel/register -r jsdom-global/register && chromium ./mochawesome-report/mochawesome.html",
+    "test": "http-server . -c-1",
     "test:monitor": "nodemon -x \"npm run test\"",
     "prepublishOnly": "npm run test && npm run build:all"
   },
@@ -39,7 +40,6 @@
     "@babel/core": "^7.1.0",
     "@babel/plugin-transform-destructuring": "^7.0.0",
     "@babel/plugin-transform-flow-strip-types": "^7.0.0",
-    "@babel/plugin-transform-parameters": "7.1.0",
     "@babel/plugin-transform-spread": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/register": "^7.0.0",
@@ -48,20 +48,13 @@
     "eslint": "^5.6.0",
     "eslint-plugin-flowtype": "^2.50.3",
     "flow-bin": "^0.81.0",
-    "http-server": "^0.10.0",
-    "jquery": "^3.3.1",
-    "jsdom": "^12.0.0",
-    "jsdom-global": "^3.0.2",
+    "http-server": "^0.11.1",
     "mocha": "^5.2.0",
-    "mochawesome": "^3.0.3",
     "nodemon": "^1.18.4",
     "webpack": "^4.20.2",
     "webpack-cli": "^3.1.1"
   },
-  "dependencies": {
-    "@cartok/html-tag-names": "^1.1.4",
-    "@cartok/svg-tag-names": "^1.1.2"
-  },
+  "dependencies": {},
   "nodemonConfig": {
     "watch": [
       "test/**/*",

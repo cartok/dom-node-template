@@ -1,10 +1,3 @@
-// add chai to env
-import { should } from "chai"
-import { expect } from "chai"
-should()
-
-// actual code imports
-import NodeTemplate from "../dist/NodeTemplate.js"
 describe("Performance init should work", () => {
     const refs = [
         "rec-start",
