@@ -14,7 +14,7 @@ export default class NodeTemplate {
             const { refs, ids } = options
             if(refs){
                 this.refs = refs.reduce((acc, curr) => {
-                    acc[curr] = this.fragment.querySelector(`[data-ref=${curr}]`)
+                    acc[curr] = this.fragment.querySelector(`[data-ref="${curr}"]`)
                     return acc
                 }, {})
             }
