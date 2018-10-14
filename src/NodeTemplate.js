@@ -8,8 +8,8 @@ VALUES_TO_REMOVE.forEach(x => {
     MUTUAL_TAG_NAMES.splice(found, 1)
 })
 
-const DEFAULT_OPTIONS = {
-}
+// const DEFAULT_OPTIONS = {
+// }
 
 const XMLNS_SVG = "http://www.w3.org/2000/svg"
 const XMLNS_XHTML = "http://www.w3.org/1999/xhtml"
@@ -47,9 +47,8 @@ export default class NodeTemplate {
             throw new Error("you need to provide a xml string as first parameter.")
         }
 
-        // merge default options
-        options = Object.assign({}, DEFAULT_OPTIONS, options)
-        let { svg } = options
+        // // merge default options
+        // options = Object.assign({}, DEFAULT_OPTIONS, options)
         
         // prepare input string
         this.text = cleanInputString(tagText, { removeComments: true })
@@ -66,36 +65,54 @@ export default class NodeTemplate {
         // console.log("finished fragment:", this.fragment)
     
         // create node references
-        const createReferences = (() => {
-            // add element references from 'data-tref' and 'id' attributes
-            this.refs = {}
-            this.ids = {}
-            Array.from(this.fragment.childNodes).forEach(tagGroup => iterate(tagGroup, n => {
-                // add data-ref references
-                let ref = undefined
-                if(n.dataset === undefined){
-                    ref = n.getAttribute("data-ref")
-                    if(ref !== null){
-                        this.refs[ref] = n
+        if(options){
+            const { refs, ids } = options
+            if(refs){
+                this.refs = refs.reduce((acc, curr) => {
+                    acc[curr] = this.fragment.querySelector(`[data-ref=${curr}]`)
+                    return acc
+                }, {})
+            }
+            if(ids){
+                this.ids = ids.reduce((acc, curr) => {
+                    acc[curr] = this.fragment.getElementById(curr)
+                    return acc
+                }, {})
+            }
+        } else {
+            const createReferences = (() => {
+                // add element references from 'data-tref' and 'id' attributes
+                this.refs = {}
+                this.ids = {}
+                Array.from(this.fragment.childNodes).forEach(tagGroup => iterate(tagGroup, n => {
+                    // add data-ref references
+                    let ref = undefined
+                    if(n.dataset === undefined){
+                        ref = n.getAttribute("data-ref")
+                        if(ref !== null){
+                            this.refs[ref] = n
+                        }
+                    } else {
+                        ref = n.dataset.ref
+                        if(ref !== undefined){
+                            this.refs[ref] = n
+                        }
                     }
-                } else {
-                    ref = n.dataset.ref
-                    if(ref !== undefined){
-                        this.refs[ref] = n
+                    // add node id references
+                    if (n.id !== "") {
+                        this.ids[n.id] = n
                     }
-                }
-                // add node id references
-                if (n.id !== "") {
-                    this.ids[n.id] = n
-                }
-            }))
+                }))
+            })()
+        }
 
-            // add root reference
-            this.root = (this.fragment.childNodes.length === 1)
-                ? this.fragment.firstElementChild
-                : Array.from(this.fragment.childNodes)
-        })()
+        // add root reference(s)
+        this.root = (this.fragment.childNodes.length === 1)
+            ? this.fragment.firstElementChild
+            : Array.from(this.fragment.childNodes)
     }
+
+
     /**
      * About 'DOMStrings' for querys: https://developer.mozilla.org/en-US/docs/Web/API/DOMString
      */
