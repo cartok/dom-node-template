@@ -1,49 +1,5 @@
 const R = document.createRange()
 
-function jsperfStuff(){
-    // OBJECT ITERATION
-    // -------------------------------------------------------------------
-    // preparation
-    function randomString(length){
-        length = length > 8 ? 8 : length
-        let end = length + 2
-        return (Math.random() + 1).toString(36).substring(2,end)
-    }
-    function randomStrings(amount, length){
-        return Array.from({length: amount}, () => randomString(length))
-    }
-    var OBJ = randomStrings(15,8).reduce((acc, curr) => {
-        acc[curr] = curr
-        return acc
-    }, {})
-
-    // setup
-    var obj = Object.assign({}, OBJ)
-
-    // BENCHS
-    // object iteration: Object.keys().forEach
-    Object.keys(obj).forEach(k => {
-        obj[k] = null
-    })
-    // object iteration: Object.keys()-for-ordered
-    var ARR = Object.keys(obj)
-    var l = ARR.length - 1
-    for(let i = 0; i < l; i++){
-        obj[ARR[i]] = null
-    }
-    // object iteration: Object.keys()-for-reversed-decrement-condition
-    var ARR = Object.keys(obj)
-    for(let i = ARR.length - 1; i--;){
-        obj[ARR[i]] = null
-    }
-    // object iteration: for-in -------- WINNER!
-    for(var k in obj){
-        obj[k] = null
-    }
-    // -------------------------------------------------------------------
-
-}
-
 export default class NodeTemplate {
     constructor(tagText, options) {
         if(typeof tagText !== "string"){
@@ -67,7 +23,7 @@ export default class NodeTemplate {
     }
     destroy(){
         // perf: use for-in
-        // object iteration benchmark: https://jsperf.com/object-iteration-bench
+        // proof: https://jsperf.com/object-iteration-bench
         let refs = this.refs
         if(refs){
             for(let k in refs){
@@ -190,8 +146,8 @@ function addReferences(that, options){
     if(options){
         const { refs, ids } = options
         // perf: use for-reverse-decement-condition
-        // loop benchmark: https://jsperf.com/for-vs-foreach/75
-        // object creation benchmark: https://jsperf.com/reduce-vs-loop/12
+        // proof:  https://jsperf.com/for-vs-foreach/75
+        // proof:  https://jsperf.com/reduce-vs-loop/12
         if(refs){
             that.refs = {}
             for(let i = refs.length - 1; i--;){
@@ -205,7 +161,8 @@ function addReferences(that, options){
             }
         }
     } else {
-        // MORGEN?
+        // perf: use recursion
+        // proof: https://jsperf.com/dom-traversal-recursive-vs-iterative
         Array.from(that.fragment.childNodes).forEach(tagGroup => iterate(tagGroup, n => {
             // add data-ref references
             let ref = undefined
@@ -224,7 +181,7 @@ function addReferences(that, options){
             if (n.id !== "") {
                 that.ids[n.id] = n
             }
-            ref = null // does this help in a foreach loop or is it useless?
+            ref = null // does this help in a or is it useless?
         }))
     }
 }
