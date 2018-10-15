@@ -1,5 +1,49 @@
 const R = document.createRange()
 
+function jsperfStuff(){
+    // OBJECT ITERATION
+    // -------------------------------------------------------------------
+    // preparation
+    function randomString(length){
+        length = length > 8 ? 8 : length
+        let end = length + 2
+        return (Math.random() + 1).toString(36).substring(2,end)
+    }
+    function randomStrings(amount, length){
+        return Array.from({length: amount}, () => randomString(length))
+    }
+    var OBJ = randomStrings(15,8).reduce((acc, curr) => {
+        acc[curr] = curr
+        return acc
+    }, {})
+
+    // setup
+    var obj = Object.assign({}, OBJ)
+
+    // BENCHS
+    // object iteration: Object.keys().forEach
+    Object.keys(obj).forEach(k => {
+        obj[k] = null
+    })
+    // object iteration: Object.keys()-for-ordered
+    var ARR = Object.keys(obj)
+    var l = ARR.length - 1
+    for(let i = 0; i < l; i++){
+        obj[ARR[i]] = null
+    }
+    // object iteration: Object.keys()-for-reversed-decrement-condition
+    var ARR = Object.keys(obj)
+    for(let i = ARR.length - 1; i--;){
+        obj[ARR[i]] = null
+    }
+    // object iteration: for-in -------- WINNER!
+    for(var k in obj){
+        obj[k] = null
+    }
+    // -------------------------------------------------------------------
+
+}
+
 export default class NodeTemplate {
     constructor(tagText, options) {
         if(typeof tagText !== "string"){
@@ -11,50 +55,49 @@ export default class NodeTemplate {
      
         // add node references
         if(options){
-            const { refs, ids } = options
-            if(refs){
-                this.refs = refs.reduce((acc, curr) => {
-                    acc[curr] = this.fragment.querySelector(`[data-ref="${curr}"]`)
-                    return acc
-                }, {})
-            }
-            if(ids){
-                this.ids = ids.reduce((acc, curr) => {
-                    acc[curr] = this.fragment.getElementById(curr)
-                    return acc
-                }, {})
-            }
+            addReferences(this, options)
         } else {
-            const createReferences = (() => {
-                // add element references from 'data-tref' and 'id' attributes
-                this.refs = {}
-                this.ids = {}
-                Array.from(this.fragment.childNodes).forEach(tagGroup => iterate(tagGroup, n => {
-                    // add data-ref references
-                    let ref = undefined
-                    if(n.dataset === undefined){
-                        ref = n.getAttribute("data-ref")
-                        if(ref !== null){
-                            this.refs[ref] = n
-                        }
-                    } else {
-                        ref = n.dataset.ref
-                        if(ref !== undefined){
-                            this.refs[ref] = n
-                        }
-                    }
-                    // add node id references
-                    if (n.id !== "") {
-                        this.ids[n.id] = n
-                    }
-                }))
-            })()
+            addReferences(this)
         }
 
         // add root reference
         this.root = (this.fragment.childNodes.length === 1)
             ? this.fragment.firstElementChild
             : Array.from(this.fragment.childNodes)
+    }
+    destroy(){
+        // perf: use for-in
+        // object iteration benchmark: https://jsperf.com/object-iteration-bench
+        let refs = this.refs
+        if(refs){
+            for(let k in refs){
+                this.refs[k].remove()
+            }
+            delete this.refs
+        }
+        delete refs
+
+        let ids = this.ids
+        if(ids){
+            for(let k in ids){
+                this.ids[k].remove()
+            }
+            delete this.ids
+        }
+        delete ids
+
+        let root = this.root
+        if(root){
+            if(root instanceof Array){
+                for(let k in root){
+                    this.root[k].remove()
+                }
+            } else {
+                this.root.remove()
+            }
+            delete this.root
+        }
+        delete root
     }
 }
 
@@ -139,6 +182,51 @@ function cleanInputString(tagText, options){
 
     // console.log("cleaned tagText string:", tagText)
     return tagText
+}
+function addReferences(that, options){
+    that.refs = {}
+    that.ids = {}
+
+    if(options){
+        const { refs, ids } = options
+        // perf: use for-reverse-decement-condition
+        // loop benchmark: https://jsperf.com/for-vs-foreach/75
+        // object creation benchmark: https://jsperf.com/reduce-vs-loop/12
+        if(refs){
+            that.refs = {}
+            for(let i = refs.length - 1; i--;){
+                that.refs[refs[i]] = that.fragment.querySelector(`[data-ref="${refs[i]}"]`)
+            }
+        }
+        if(ids){
+            that.ids = {}
+            for(let i = ids.length - 1; i--;){
+                that.ids[refs[i]] = that.fragment.getElementById(refs[i])
+            }
+        }
+    } else {
+        // MORGEN?
+        Array.from(that.fragment.childNodes).forEach(tagGroup => iterate(tagGroup, n => {
+            // add data-ref references
+            let ref = undefined
+            if(n.dataset === undefined){
+                ref = n.getAttribute("data-ref")
+                if(ref !== null){
+                    that.refs[ref] = n
+                }
+            } else {
+                ref = n.dataset.ref
+                if(ref !== undefined){
+                    that.refs[ref] = n
+                }
+            }
+            // add node id references
+            if (n.id !== "") {
+                that.ids[n.id] = n
+            }
+            ref = null // does this help in a foreach loop or is it useless?
+        }))
+    }
 }
 function iterate(n, cb){
     let itCounter = 0
