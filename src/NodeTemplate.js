@@ -31,7 +31,6 @@ export default class NodeTemplate {
             }
             delete this.refs
         }
-        delete refs
 
         let ids = this.ids
         if(ids){
@@ -40,7 +39,6 @@ export default class NodeTemplate {
             }
             delete this.ids
         }
-        delete ids
 
         let root = this.root
         if(root){
@@ -53,11 +51,10 @@ export default class NodeTemplate {
             }
             delete this.root
         }
-        delete root
     }
 }
 
-
+// constructor
 function cleanInputString(tagText, options){
     options = Object.assign({}, options)
     let { removeComments, replaceAttributeValueQuotes } = options
@@ -142,7 +139,6 @@ function cleanInputString(tagText, options){
 function addReferences(that, options){
     that.refs = {}
     that.ids = {}
-
     if(options){
         const { refs, ids } = options
         // perf: use for-reverse-decement-condition
@@ -150,67 +146,68 @@ function addReferences(that, options){
         // proof:  https://jsperf.com/reduce-vs-loop/12
         if(refs){
             that.refs = {}
-            for(let i = refs.length - 1; i--;){
+            for(let i = refs.length; i--;){
                 that.refs[refs[i]] = that.fragment.querySelector(`[data-ref="${refs[i]}"]`)
             }
         }
         if(ids){
             that.ids = {}
-            for(let i = ids.length - 1; i--;){
+            for(let i = ids.length; i--;){
                 that.ids[refs[i]] = that.fragment.getElementById(refs[i])
             }
         }
     } else {
+        // perf: use for-reverse-decement-condition
+        // proof:  https://jsperf.com/for-vs-foreach/75
         // perf: use recursion
         // proof: https://jsperf.com/dom-traversal-recursive-vs-iterative
-        Array.from(that.fragment.childNodes).forEach(tagGroup => iterate(tagGroup, n => {
-            // add data-ref references
-            let ref = undefined
-            if(n.dataset === undefined){
-                ref = n.getAttribute("data-ref")
-                if(ref !== null){
-                    that.refs[ref] = n
+        let nodes = Array.from(that.fragment.childNodes)
+        for(let i = nodes.length; i--;){
+            iterate(nodes[i], () => {
+                // add data-ref references
+                let ref = undefined
+                if(nodes[i].dataset === undefined){
+                    ref = nodes[i].getAttribute("data-ref")
+                    if(ref !== null){
+                        that.refs[ref] = nodes[i]
+                    }
+                } else {
+                    ref = nodes[i].dataset.ref
+                    if(ref !== undefined){
+                        that.refs[ref] = nodes[i]
+                    }
                 }
-            } else {
-                ref = n.dataset.ref
-                if(ref !== undefined){
-                    that.refs[ref] = n
+                // add node id references
+                if(nodes[i].id !== "") {
+                    that.ids[nodes[i].id] = nodes[i]
                 }
-            }
-            // add node id references
-            if (n.id !== "") {
-                that.ids[n.id] = n
-            }
-            ref = null // does this help in a or is it useless?
-        }))
+            })
+        } 
     }
 }
-function iterate(n, cb){
-    let itCounter = 0
-    const iterate = (n) => {
-        if (n !== null && n.nodeType === Node.ELEMENT_NODE) {
-            // execute callback with validated node.
-            cb(n)
-            itCounter++
-            // traverse...
-            if (n.hasChildNodes) {
-                iterate(n.firstElementChild)
-            }
-            if (n.nextElementSibling !== null) {
-                iterate(n.nextElementSibling)
-            }
-        } else if (itCounter === 0){
-            throw new Error("First parameter must be Node.")
-        }
-    }
 
-    iterate(n)
-
-    return false
-}
+// methods
 function getQueryType(query){
     return  query instanceof Node ? "Node" : 
             query.charAt(0) === "." ? "id" : 
             query.charAt(0) === "#" ? "class" : "query"
 }
+
+// helper
+function iterate(node, callback){
+    if(node !== null){
+        if(!((node instanceof Node) && (node.nodeType === Node.ELEMENT_NODE))){
+            throw new Error("First parameter must be Node.ELEMENT_NODE.")
+        }
+        // execute callback
+        callback(node)
+        if(node.hasChildNodes){
+            iterate(node.firstElementChild, callback)
+        }
+        if(node.nextElementSibling !== null){
+            iterate(node.nextElementSibling, callback)
+        }
+    }
+}
+
 

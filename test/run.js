@@ -1,5 +1,5 @@
-import "./import-test.js"
-import "./performant-init-option-test.js"
+import "./test.import.js"
+import "./test.perf-init.js"
 
 mocha.checkLeaks()
 mocha.run()
