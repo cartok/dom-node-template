@@ -62,7 +62,7 @@ function cleanInputString(text, options){
     // perf: string methods (split, fast for)
     // proof: https://jsperf.com/node-template-string-cleanup-remove-comments
     if(removeComments){
-        var lines = text.split("\n")
+        let lines = text.split("\n")
         for(let i = lines.length; i--;){
             let position = lines[i].indexOf("//")
             let found = (position !== -1)
@@ -107,11 +107,11 @@ function cleanInputString(text, options){
 
     // perf: substring loop
     // proof: https://jsperf.com/node-template-string-cleanup-complex
-    var index = 0
-    var found = false
-    var removeSpaceBeforeOffsetOne = false
-    var removeSpaceAfterOffsetTwo = false
-    var removeSpaceAfterOffsetThree = false
+    let index = 0
+    let found = false
+    let removeSpaceBeforeOffsetOne = false
+    let removeSpaceAfterOffsetTwo = false
+    let removeSpaceAfterOffsetThree = false
     do {
         removeSpaceBeforeOffsetOne = (index = text.indexOf("\n")) !== -1
             || (index = text.indexOf("\t")) !== -1

@@ -9,8 +9,8 @@
     function randomStrings(amount, length){
         return Array.from({length: amount}, () => randomString(length))
     }
-    var OBJ = randomStrings(15,8).reduce((acc, curr) => {
-        acc[curr] = curr
+    var OBJ = randomStrings(10,8).reduce((acc, curr) => {
+        acc[curr] = randomString(10)
         return acc
     }, {})
 
