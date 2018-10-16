@@ -9,6 +9,7 @@ describe("Node Template Tests", () => {
                 ">hello kitty</h1>
             </div>
         `)
+        console.log(s)
         it("should create node template", () => {
             s.text.should.be.an("string")
             s.refs.should.be.an("object")

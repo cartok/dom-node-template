@@ -1,3 +1,75 @@
+var bbox = `
+    <svg 
+        class="bbox"
+        >
+        <g  
+            data-ref="position-node" 
+            transform="translate(0, 0)"
+            >
+            <g
+                data-ref="container-node" 
+                transform="translate(0, 0)"
+                >
+                
+                <rect 
+                    data-ref="collision-node" 
+                    x="0" 
+                    y="0" 
+                    width="0" 
+                    height="0" 
+                    stroke="none" 
+                    stroke-width="0"
+                    fill="gray"
+                    />
+
+                <svg 
+                    data-ref="border-node" 
+                    x="0"
+                    y="0"
+                    width="0"
+                    height="0"
+                    >
+                    <g 
+                        data-ref="border-group" 
+                        fill="black" 
+                        stroke="none" 
+                        stroke-width="0"
+                        >
+                        <polygon 
+                            data-ref="border-top" 
+                            points="0,0 0,0 0,0 0,0"
+                            />
+                        <polygon 
+                            data-ref="border-right" 
+                            points="0,0 0,0 0,0 0,0"
+                            />
+                        <polygon 
+                            data-ref="border-bottom" 
+                            points="0,0 0,0 0,0 0,0"
+                            />
+                        <polygon 
+                            data-ref="border-left" 
+                            points="0,0 0,0 0,0 0,0"
+                            />
+                    </g>
+                </svg>
+
+                <rect 
+                    data-ref="cursor-node"
+                    fill="transparent"
+                    stroke="none"
+                    stroke-width="0"
+                    x="0"
+                    y="0"
+                    width="0"
+                    height="0"
+                    />
+            </g>
+        </g>
+    </svg>
+`
+
+
 var text = `
     <g transform="translate(
         0,
