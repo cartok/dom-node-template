@@ -2,19 +2,17 @@
   "name": "dom-node-template",
   "version": "3.0.1-2",
   "main": "./dist/NodeTemplate.js",
-  "description": "Usefull and performant way to create html/svg elements.",
+  "description": "Usefull and performant way to create HTML/SVG views.",
   "keywords": [
     "dom",
     "parser",
     "node",
     "element",
     "template",
+    "string",
     "jsx",
-    "svg",
-    "template",
-    "dom parser",
-    "template string",
-    "string template"
+    "view",
+    "svg"
   ],
   "repository": {
     "type": "git",
