@@ -32,7 +32,7 @@
 
 <script>
 
-    const simpleText = `
+    window.simpleText = `
         <div>
             <div>
                 <div>
@@ -49,7 +49,7 @@
             <div></div>
         </div>
     `
-    const complexText = `
+    window.complexText = `
         <svg 
             class="bbox"
             >
@@ -58,6 +58,7 @@
                 transform="translate(0, 0)"
                 >
 
+                // HOHOHOHOHOHOOHOHOHOHOHOHOHOOH
                 <g
                     data-ref="container-node" 
                     transform="translate(0, 0)"
@@ -106,6 +107,7 @@
                         </g>
                     </svg>
 
+                    // HOHOHOHOHOHOOHOHOHOHOHOHOHOOH
                     <rect 
                         data-ref="cursor-node"
                         fill="transparent"
@@ -139,11 +141,13 @@
         </div>
 
         <div
+            src="https://.....sdfsdfsd.fs.de" hodor="file:///sdflksjdf"     // asldökfjasdfasdfasdfsdfsdfsdf
             attribute="
                 foo,
                 bar,
                 baz
             "/>
+    // sölkdfjsdf sdf
     `
 
     // bench
@@ -157,117 +161,20 @@
 
     bench
         .add("clean old", () => {
-            cleanInputString_old(complexText, { removeComments: false })
+            cleanInputString_old(complexText)
         })
-        .add("clean new", () => {
-            cleanInputString(complexText, { removeComments: false })
+        .add("clean new - 1", () => {
+            cleanInputString_new_1(complexText)
+        })
+        .add("clean new - 2", () => {
+            cleanInputString_new_2(complexText)
         })
         .run({ "async": false, "queued": true })
 
-
-    function cleanInputString(text, options){
-        options = Object.assign({}, options)
-        let { removeComments } = options
-        
-        // perf: string methods (split, fast for)
-        // proof: https://jsperf.com/node-template-string-cleanup-remove-comments
-        if(removeComments){
-            let lines = text.split("\n")
-            for(let i = lines.length; i--;){
-                let position = lines[i].indexOf("//")
-                let found = (position !== -1)
-                if(found){
-                    if(position > 0){
-                        // skip 'https://' and 'file:///'
-                        let precedingChar = lines[i].charAt(position - 1)
-                        let followingChar = lines[i].charAt(position + 2)
-                        let subPosition = null
-                        while(precedingChar === ":"){
-                            if(followingChar === "/"){
-                                // continue search in substring
-                                position += 3
-                                subPosition = lines[i].substring(position).indexOf("//")                
-                            } else {
-                                // continue search in substring
-                                position += 2
-                                subPosition = lines[i].substring(position).indexOf("//")                
-                            }
-                            found = (subPosition !== -1)
-                            if(found){
-                                // repeat
-                                position += subPosition
-                                precedingChar = lines[i].charAt(position - 1)
-                                followingChar = lines[i].charAt(position + 2)   
-                            } else {
-                                // while-loop: nothing found => finish search
-                                break
-                            }
-                        }
-                        // for-loop: nothing found after detecting https:// or file:/// => next line
-                        if(!found){
-                            continue
-                        }
-                    }
-                    // remove comment
-                    lines[i] = lines[i].substring(0, position)
-                }
-            }
-            text = lines.join("\n")
-        }
-
-        // perf: substring loop
-        // proof: https://jsperf.com/node-template-string-cleanup-complex
-        let index = 0
-        let found = false
-        do {
-            let removeSpaceBeforeOffsetOne = false
-            let removeSpaceAfterOffsetTwo = false
-            let removeSpaceAfterOffsetThree = false
-            removeSpaceBeforeOffsetOne = (index = text.indexOf("\n")) !== -1
-                || (index = text.indexOf("\t")) !== -1
-                || (index = text.indexOf("  ")) !== -1
-                || (index = text.indexOf(" <")) !== -1
-                || (index = text.indexOf(" >")) !== -1
-                || (index = text.indexOf(" />")) !== -1
-                || (index = text.indexOf(" '")) !== -1
-                || (index = text.indexOf(" \"")) !== -1
-                || (index = text.indexOf(" (")) !== -1
-                || (index = text.indexOf(" )")) !== -1
-                || (index = text.indexOf(" ,")) !== -1
-                || (index = text.indexOf(" ;")) !== -1
-            if(removeSpaceBeforeOffsetOne){
-                // target-offset = 1
-                text = text.substring(0, index) + text.substring(index + 1)
-            }
-
-            removeSpaceAfterOffsetTwo = (index = text.indexOf("< ")) !== -1
-                || (index = text.indexOf("> ")) !== -1
-                || (index = text.indexOf("( ")) !== -1
-                || (index = text.indexOf("= \"")) !== -1
-            if(removeSpaceAfterOffsetTwo){
-                // target-offset = 2
-                text = text.substring(0, index + 1) + text.substring(index + 2)
-            }
-
-            removeSpaceAfterOffsetThree = (index = text.indexOf("</ ")) !== -1
-                || (index = text.indexOf("=\" ")) !== -1
-                || (index = text.indexOf(")\" >")) !== -1
-            if(removeSpaceAfterOffsetThree){
-                // target-offset = 3
-                text = text.substring(0, index + 2) + text.substring(index + 3)
-            }
-
-            found = removeSpaceBeforeOffsetOne || removeSpaceAfterOffsetTwo || removeSpaceAfterOffsetThree
-        } while(found)
-
-        return text
-    }
-    function cleanInputString_old(tagText, options = {}){
-        let { removeComments } = options
-        
-        if(removeComments){
-            // remove js line comments.
-            tagText = tagText.replace(/\s*(?<![\:\/])\/{2}.*$/gm, "")
+    console.log(removeComments(complexText))
+    function cleanInputString_old(tagText, options = { removeComments: true }){
+        if(options.removeComments){
+            tagText = removeComments(tagText)
         }
 
         // remove all newlines, tabs and returns from the tagText string to create one line
@@ -332,18 +239,119 @@
         return tagText
     }
 
-    const fragment = document.createRange().createContextualFragment(cleanInputString(complexText))
-    console.log(fragment)
-    console.log(getNodeReferences_old(fragment))
-    console.log(getNodeReferences(fragment))
+    /* DOCUMENTATION?
+    0. 
+    "\t"
+    
+    1. 
+    "  "
+    
+    2.
+    " <"
+    " >"
+    " '"
+    " \""
+    " ("
+    " )"
+    " ,"
+    " ;"
+    \s([<>'\\(\),;])
+
+    3.
+    "> "
+    "( "
+    ([>\(])\s
+
+    4.
+    ")\" >"
+    (\)\")\s
+
+    5.
+    "=\" "
+    (\=\")\s
+
+    6.
+    " />"
+    \s(\/\>)
+
+    7.
+    "= \""
+    (\=)\s(\")
+    TOTAL: \s([<>'\\(\),;])|([>\(])\s|(\)\")\s|(\=\")\s|\s(\/\>)|(\=)\s(\")
+*/
+    function cleanInputString_new(tagText, options = { removeComments: true }){
+        // if(options.removeComments || hasComment()){
+        if(options.removeComments){
+            tagText = removeComments(tagText)
+        }
+
+        tagText = tagText.replace(/\s{2,}/g, " ") // [x]
+        tagText = tagText.replace(/\s([<>'\\(\),;])|([>\(])\s|(\)\")\s|(\=\")\s|\s(\/\>)|(\=)\s(\")/g, "$1$2$3$4$5$6$7") // [x]
+        
+        return tagText
+    }
+    
+    // solid
+    function removeComments(text){
+        let lines = text.split("\n")
+        for(let i = lines.length; i--;){
+            let position = lines[i].indexOf("//")
+            let found = (position !== -1)
+            if(found){
+                if(position > 0){
+                    // skip 'https://' and 'file:///'
+                    let precedingChar = lines[i].charAt(position - 1)
+                    let followingChar = lines[i].charAt(position + 2)
+                    let subPosition = null
+                    while(precedingChar === ":"){
+                        if(followingChar === "/"){
+                            // continue search in substring
+                            position += 3
+                            subPosition = lines[i].substring(position).indexOf("//")                
+                        } else {
+                            // continue search in substring
+                            position += 2
+                            subPosition = lines[i].substring(position).indexOf("//")                
+                        }
+                        found = (subPosition !== -1)
+                        if(found){
+                            // repeat
+                            position += subPosition
+                            precedingChar = lines[i].charAt(position - 1)
+                            followingChar = lines[i].charAt(position + 2)   
+                        } else {
+                            // while-loop: nothing found => finish search
+                            break
+                        }
+                    }
+                    // for-loop: nothing found after detecting https:// or file:/// => next line
+                    if(!found){
+                        continue
+                    }
+                }
+                // remove comment
+                lines[i] = lines[i].substring(0, position)
+            }
+        }
+        text = lines.join("")
+        return text
+    }
+
+
+
+
+
+    // REFERENCES BENCH
+    // const fragment = document.createRange().createContextualFragment(cleanInputString_old(complexText))
     // bench
-    //     .add("add references old", () => {
-    //         getNodeReferences_old(fragment)
-    //     })
-    //     .add("add references new", () => {
-    //         getNodeReferences(fragment)
-    //     })
+        // .add("add references old", () => {
+        //     getNodeReferences_old(fragment)
+        // })
+        // .add("add references new", () => {
+        //     getNodeReferences(fragment)
+        // })
         // .run({ "async": true, "queued": true })
+        // result: not much difference in a normal use case
     
     function getNodeReferences(fragment, options){
         const result = {
@@ -400,7 +408,6 @@
 
         return result
     }
-
     function getNodeReferences_old(fragment){
         // add element references from 'data-tref' and 'id' attributes
         const result = {

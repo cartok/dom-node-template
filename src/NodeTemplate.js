@@ -5,9 +5,9 @@ export default class NodeTemplate {
         if(typeof tagText !== "string"){
             throw new Error("You need to provide a HTML/XML/SVG String as first parameter.")
         }
-        this.version = "3.0.1-8"
+        this.version = "3.0.1-7"
 
-        this.text = cleanInputString_old(tagText, { removeComments: true })
+        this.text = cleanInputString(tagText, { removeComments: true })
         try {
             this.fragment = R.createContextualFragment(this.text)
         } catch(error){
@@ -301,3 +301,43 @@ function getQueryType(query){
             query.charAt(0) === "#" ? "class" : "query"
 }
 
+/*
+removeSpaceBeforeOffsetOne:
+["\n", "\t", "  ", " <", " >", " />", " '", " \"", " (", " )", " ,", " ;"]
+removeSpaceAfterOffsetTwo:
+["> ", "( ", "= \""]
+
+*/
+function okitwasbad(text){
+    const tokens = {
+        A: {
+            tokens: ["\n", "\t", "  ", " <", " >", " />", " '", " \"", " (", " )", " ,", " ;"],
+            offset: 1,
+        },
+        B: {
+            tokens: ["> ", "( ", "= \""],
+            offset: 2,
+        },
+        C: {
+            tokens: ["=\" ", ")\" >"],
+            offset: 3,
+        }
+    }
+    // SUCKS.
+    let result = ""
+    let remainingText = text
+    let tokenArray = undefined
+    while(remainingText.length > 0){
+        // add till token
+        tokenArray = tokens.A.tokens
+        for(let i = 0; i < tokenArray.length; i++){
+            let index = remainingText.indexOf(tokenArray[i])
+            let found = index !== -1
+            if(found){
+                tesult += remainingText.substring(0, index)
+                remainingText = remainingText.substring(index + 1)
+
+            }
+        }
+    }
+}
