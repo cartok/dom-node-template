@@ -1,6 +1,6 @@
 {
   "name": "dom-node-template",
-  "version": "3.0.1-5",
+  "version": "3.0.1-6",
   "main": "./dist/NodeTemplate.js",
   "description": "Usefull and performant way to create HTML/SVG views.",
   "keywords": [
