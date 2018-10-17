@@ -9,13 +9,13 @@ export default class NodeTemplate {
 
         this.text = cleanInputString(tagText, { removeComments: true })
         try {
-            this.fragment = R.createContextualFragment(this.text)
+            fragment = R.createContextualFragment(this.text)
         } catch(error){
             throw error
         }
      
         // add node references
-        const { root, refs, ids } = getNodeReferences(this.fragment, options)
+        const { root, refs, ids } = getNodeReferences(fragment, options)
         this.root = root
         this.refs = refs
         this.ids = ids
@@ -157,9 +157,9 @@ function getNodeReferences(fragment, options){
         root: null,
     }
 
-    result.root = (this.fragment.childNodes.length === 1)
-            ? this.fragment.firstElementChild
-            : Array.from(this.fragment.childNodes)
+    result.root = (fragment.childNodes.length === 1)
+            ? fragment.firstElementChild
+            : Array.from(fragment.childNodes)
 
     if(options){
         const { refs, ids } = options
