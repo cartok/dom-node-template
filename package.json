@@ -30,7 +30,7 @@
     "build:webpack": "npm run babelrc:es5 && npm install -d && webpack --mode=production",
     "build:all": "npm run build:webpack && npm run build:es6",
     "test": "http-server . -c-1",
-    "test:monitor": "nodemon -x \"npm run test\"",
+    "test:watch": "nodemon -x \"npm run test\"",
     "prepublishOnly": "npm run test && npm run build:all"
   },
   "devDependencies": {

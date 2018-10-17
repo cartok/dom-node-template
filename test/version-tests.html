@@ -1,0 +1,168 @@
+<!-- https://benchmarkjs.com/ -->
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/platform@1.3.5/platform.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/benchmark@2.1.4/benchmark.min.js"></script>
+<script>
+    window.bench = new Benchmark.Suite()
+        .on("start cycle", function(event){
+            console.log("starting cycle")
+        })
+        .on("cycle", function(event){
+            console.log(String(event.target))
+        })
+        .on("complete", function(){
+            console.log(`Fastest is ${this.filter('fastest').map('name')}`)
+        })
+</script>
+<!-- 
+    <script src="https://cdn.jsdelivr.net/npm/dom-node-template@3.0.1-2/dist/bundle.js"></script>
+-->
+<script type="module" src="../src/NodeTemplate.js"></script>
+<script>
+    console.log(NodeTemplate)
+    window.NodeTemplate_3012 = NodeTemplate
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/dom-node-template@3.0.1-1/dist/bundle.js"></script>
+<script>
+    window.NodeTemplate_3011 = NodeTemplate
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/dom-node-template@latest/build/bundle.js"></script>
+      
+
+<script>
+
+    const simpleText = `
+        <div>
+            <div>
+                <div>
+                    <div>
+                        <div>
+                            <div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    `
+    const complexText = `
+        <svg 
+            class="bbox"
+            >
+            <g  
+                data-ref="position-node" 
+                transform="translate(0, 0)"
+                >
+
+                <g
+                    data-ref="container-node" 
+                    transform="translate(0, 0)"
+                    >
+                    
+                    <rect 
+                        data-ref="collision-node" 
+                        x="0" 
+                        y="0" 
+                        width="0" 
+                        height="0" 
+                        stroke="none" 
+                        stroke-width="0"
+                        fill="gray"
+                        />
+
+                    <svg 
+                        data-ref="border-node" 
+                        x="0"
+                        y="0"
+                        width="0"
+                        height="0"
+                        >
+                        <g 
+                            data-ref="border-group" 
+                            fill="black" 
+                            stroke="none" 
+                            stroke-width="0"
+                            >
+                            <polygon 
+                                data-ref="border-top" 
+                                points="0,0 0,0 0,0 0,0"
+                                />
+                            <polygon 
+                                data-ref="border-right" 
+                                points="0,0 0,0 0,0 0,0"
+                                />
+                            <polygon 
+                                data-ref="border-bottom" 
+                                points="0,0 0,0 0,0 0,0"
+                                />
+                            <polygon 
+                                data-ref="border-left" 
+                                points="0,0 0,0 0,0 0,0"
+                                />
+                        </g>
+                    </svg>
+
+                    <rect 
+                        data-ref="cursor-node"
+                        fill="transparent"
+                        stroke="none"
+                        stroke-width="0"
+                        x="0"
+                        y="0"
+                        width="0"
+                        height="0"
+                        />
+                </g>
+            </g>
+        </svg>
+
+        <div transform="translate(1, 2)
+            translate (
+                3,
+                4
+            )
+            translate(1px, 0px)
+            rotate(-0deg)
+            scale(0.5, 0.5)"
+            
+            style="
+                text-shadow: 1px 1px 2px black, 0 0 25px blue; 
+                color: rgba(200, 300,  2, .18 );
+                text-shadow: 0 0 3px #FF0000, 0 0 5px #0000FF;
+                background: url('img.gif') right bottom no-repeat, url('img.gif') left top repeat;
+                background: linear-gradient(to bottom, #1e5799 0%, #2989d8 50%, #207cca  51%, #7db9e8 100%);
+            ">
+        </div>
+
+        <div
+            attribute="
+                foo,
+                bar,
+                baz
+            "/>
+    `
+
+    bench
+        // .add("old", () => {
+        //     let complexOld = new NodeTemplate(complexText)
+        //     let simpleOld = new NodeTemplate(simpleText)
+        // })
+        .add("3.0.1-1", () => {
+            let complex3011 = new NodeTemplate_3011(complexText)
+            // let simple3011 = new NodeTemplate_3011(simpleText)
+        })
+        .add("3.0.1-2", () => {
+            let complex3012 = new NodeTemplate_3012(complexText)
+            // let simple3012 = new NodeTemplate_3012(simpleText)
+        })
+        // .run({ "async": true, "queued": true })
+
+    console.log(new window.NodeTemplate_3012(complexText))
+
+</script>
