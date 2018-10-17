@@ -5,9 +5,9 @@ export default class NodeTemplate {
         if(typeof tagText !== "string"){
             throw new Error("You need to provide a HTML/XML/SVG String as first parameter.")
         }
-        this.version = "3.0.1-7"
+        this.version = "3.0.1-8"
 
-        this.text = cleanInputString(tagText, { removeComments: true })
+        this.text = cleanInputString_old(tagText, { removeComments: true })
         try {
             this.fragment = R.createContextualFragment(this.text)
         } catch(error){
