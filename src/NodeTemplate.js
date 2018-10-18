@@ -5,12 +5,13 @@ export default class NodeTemplate {
         if(typeof tagText !== "string"){
             throw new Error("You need to provide a HTML/XML/SVG String as first parameter.")
         }
-        this.version = "3.0.1-7"
+        this.version = "3.0.2"
 
-        this.text = cleanInputString(tagText, { removeComments: true })
+        this.text = cleanInputString(tagText)
         try {
             this.fragment = R.createContextualFragment(this.text)
         } catch(error){
+            console.error("Could not create DocumentFragment with createContextualFragment(). Your template string has errors.")
             throw error
         }
      
@@ -56,168 +57,56 @@ export default class NodeTemplate {
 function detectComment(text){
     // empty
 }
-function cleanInputString(text, options = {}){
-    let { removeComments } = options
-    
-    // perf: string methods (split, fast for)
-    // proof: https://jsperf.com/node-template-string-cleanup-remove-comments
-    if(removeComments){
-        let lines = text.split("\n")
-        for(let i = lines.length; i--;){
-            let position = lines[i].indexOf("//")
-            let found = (position !== -1)
-            if(found){
-                if(position > 0){
-                    // skip 'https://' and 'file:///'
-                    let precedingChar = lines[i].charAt(position - 1)
-                    let followingChar = lines[i].charAt(position + 2)
-                    let subPosition = null
-                    while(precedingChar === ":"){
-                        if(followingChar === "/"){
-                            // continue search in substring
-                            position += 3
-                            subPosition = lines[i].substring(position).indexOf("//")                
-                        } else {
-                            // continue search in substring
-                            position += 2
-                            subPosition = lines[i].substring(position).indexOf("//")                
-                        }
-                        found = (subPosition !== -1)
-                        if(found){
-                            // repeat
-                            position += subPosition
-                            precedingChar = lines[i].charAt(position - 1)
-                            followingChar = lines[i].charAt(position + 2)   
-                        } else {
-                            // while-loop: nothing found => finish search
-                            break
-                        }
+function removeComments(text){
+    let lines = text.split("\n")
+    for(let i = lines.length; i--;){
+        let position = lines[i].indexOf("//")
+        let found = (position !== -1)
+        if(found){
+            if(position > 0){
+                // skip 'https://' and 'file:///'
+                let precedingChar = lines[i].charAt(position - 1)
+                let followingChar = lines[i].charAt(position + 2)
+                let subPosition = null
+                while(precedingChar === ":"){
+                    if(followingChar === "/"){
+                        // continue search in substring
+                        position += 3
+                        subPosition = lines[i].substring(position).indexOf("//")                
+                    } else {
+                        // continue search in substring
+                        position += 2
+                        subPosition = lines[i].substring(position).indexOf("//")                
                     }
-                    // for-loop: nothing found after detecting https:// or file:/// => next line
-                    if(!found){
-                        continue
+                    found = (subPosition !== -1)
+                    if(found){
+                        // repeat
+                        position += subPosition
+                        precedingChar = lines[i].charAt(position - 1)
+                        followingChar = lines[i].charAt(position + 2)   
+                    } else {
+                        // while-loop: nothing found => finish search
+                        break
                     }
                 }
-                // remove comment
-                lines[i] = lines[i].substring(0, position)
+                // for-loop: nothing found after detecting https:// or file:/// => next line
+                if(!found){
+                    continue
+                }
             }
+            // remove comment
+            lines[i] = lines[i].substring(0, position)
         }
-        text = lines.join("\n")
     }
-
-    // perf: substring loop
-    // proof: https://jsperf.com/node-template-string-cleanup-complex
-    let index = 0
-    let found = false
-    let removeSpaceBeforeOffsetOne = false
-    let removeSpaceAfterOffsetTwo = false
-    let removeSpaceAfterOffsetThree = false
-    do {
-        removeSpaceBeforeOffsetOne = (index = text.indexOf("\n")) !== -1
-            || (index = text.indexOf("\t")) !== -1
-            || (index = text.indexOf("  ")) !== -1
-            || (index = text.indexOf(" <")) !== -1
-            || (index = text.indexOf(" >")) !== -1
-            || (index = text.indexOf(" />")) !== -1
-            || (index = text.indexOf(" '")) !== -1
-            || (index = text.indexOf(" \"")) !== -1
-            || (index = text.indexOf(" (")) !== -1
-            || (index = text.indexOf(" )")) !== -1
-            || (index = text.indexOf(" ,")) !== -1
-            || (index = text.indexOf(" ;")) !== -1
-        if(removeSpaceBeforeOffsetOne){
-            // target-offset = 1
-            text = text.substring(0, index) + text.substring(index + 1)
-        }
-
-        removeSpaceAfterOffsetTwo = (index = text.indexOf("< ")) !== -1
-            || (index = text.indexOf("> ")) !== -1
-            || (index = text.indexOf("( ")) !== -1
-            || (index = text.indexOf("= \"")) !== -1
-        if(removeSpaceAfterOffsetTwo){
-            // target-offset = 2
-            text = text.substring(0, index + 1) + text.substring(index + 2)
-        }
-
-        removeSpaceAfterOffsetThree = (index = text.indexOf("</ ")) !== -1
-            || (index = text.indexOf("=\" ")) !== -1
-            || (index = text.indexOf(")\" >")) !== -1
-        if(removeSpaceAfterOffsetThree){
-            // target-offset = 3
-            text = text.substring(0, index + 2) + text.substring(index + 3)
-        }
-
-        found = removeSpaceBeforeOffsetOne || removeSpaceAfterOffsetTwo || removeSpaceAfterOffsetThree
-    } while(found)
-
+    text = lines.join("")
     return text
 }
-function cleanInputString_old(tagText, options = {}){
-    let { removeComments } = options
-    
-    if(removeComments){
-        // remove js line comments.
-        tagText = tagText.replace(/\s*(?<![\:\/])\/{2}.*$/gm, "")
-    }
-
-    // remove all newlines, tabs and returns from the tagText string to create one line
-    // regex: [\n\t\r]
-    // subst: null
-    tagText = tagText.replace(/[\n\t\r]/g, "")
-
-    // style multiline specific:
-    // ------------------------------------------------------------------
-    // remove all spaces > 2 
-    // regex: \s{2,}
-    // subst: null
+function cleanInputString(tagText){
+    // preprocessing
+    tagText = removeComments(tagText)
     tagText = tagText.replace(/\s{2,}/g, " ")
-    
-    // add space after every ; in style attributes
-    // regex: ;([^\s])
-    // subst: ; $1
-    tagText = tagText.replace(/;([^\s])/g, "; $1")
-    
-    // remove space before "> close combination
-    // regex: \s(">)
-    // subst: $1
-    tagText = tagText.replace(/\s(">)/g, "$1")    
 
-    // ------------------------------------------------------------------
-
-    // remove all whitespace between tags but not inside of tags
-    // regex: >\s*<
-    // subst: ><
-    tagText = tagText.replace(/>\s*</g, "><")
-
-    // remove all whitespace before the first tag or after the last tag
-    // regex: ^(\s*)|(\s*)$
-    // subst: null
-    tagText = tagText.replace(/^(\s*)|(\s*)$/g, "")
-
-    // remove spaces before tagText nodes
-    // regex: >\s*
-    // subst: >
-    tagText = tagText.replace(/>\s*/g, ">")
-    
-    // remove spaces after tagText nodes
-    // regex: \s*<
-    // subst: <
-    tagText = tagText.replace(/\s*</g, "<")
-
-    // remove space between opening tag and first attribute
-    // regex: (<\w*)(\s{2,})
-    // subst: $1\s
-    tagText = tagText.replace(/(<\w+)(\s{2,})/g, "$1 ")
-
-    // remove space between attributes (trailing space)
-    // regex: ([\w-_]+="[\w\s-_]+")(\s*(?!>))
-    // subst: $1\s
-    tagText = tagText.replace(/([\w-_]+="[\w\s-_]+")(\s*(?!>))/g, "$1 ")
-
-    // remove space between last attribute and closing tag
-    // regex: (\w+="\w+")(\s+)>
-    // subst: $1>
-    tagText = tagText.replace(/([\w-_]+="[\w\s-_]+")(\s{2,})>/g, "$1>")
+    tagText = tagText.replace(/\s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?/g, "$1$2$3$4")
     
     return tagText
 }
@@ -299,45 +188,4 @@ function getQueryType(query){
     return  query instanceof Node ? "Node" : 
             query.charAt(0) === "." ? "id" : 
             query.charAt(0) === "#" ? "class" : "query"
-}
-
-/*
-removeSpaceBeforeOffsetOne:
-["\n", "\t", "  ", " <", " >", " />", " '", " \"", " (", " )", " ,", " ;"]
-removeSpaceAfterOffsetTwo:
-["> ", "( ", "= \""]
-
-*/
-function okitwasbad(text){
-    const tokens = {
-        A: {
-            tokens: ["\n", "\t", "  ", " <", " >", " />", " '", " \"", " (", " )", " ,", " ;"],
-            offset: 1,
-        },
-        B: {
-            tokens: ["> ", "( ", "= \""],
-            offset: 2,
-        },
-        C: {
-            tokens: ["=\" ", ")\" >"],
-            offset: 3,
-        }
-    }
-    // SUCKS.
-    let result = ""
-    let remainingText = text
-    let tokenArray = undefined
-    while(remainingText.length > 0){
-        // add till token
-        tokenArray = tokens.A.tokens
-        for(let i = 0; i < tokenArray.length; i++){
-            let index = remainingText.indexOf(tokenArray[i])
-            let found = index !== -1
-            if(found){
-                tesult += remainingText.substring(0, index)
-                remainingText = remainingText.substring(index + 1)
-
-            }
-        }
-    }
 }
