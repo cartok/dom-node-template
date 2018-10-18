@@ -1,5 +1,7 @@
 const R = document.createRange()
 
+// https://jsperf.com/node-template-version-comparison
+// https://jsperf.com/react-vs-node-template-element-creation
 export default class NodeTemplate {
     constructor(tagText, options) {
         if(typeof tagText !== "string"){
