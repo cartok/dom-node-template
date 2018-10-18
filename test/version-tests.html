@@ -148,7 +148,45 @@
                 baz
             "/>
     // sölkdfjsdf sdf
+        < div x
+            = 
+            "  
+            y  
+            " 
+        > foo </ bar >
+        < div foo = " translate ( 1 , 1 ) translate ( 1 , 1 ) " ></ div >
+        < div >
+        < div />
+        < div style="
+            color: rgba( 
+                200 ,  
+                300 ,   
+                2 ,  
+                .18 ) ;
+            background: blue ;
+        " > </ div >
     `
+
+    window.moreText = `
+        < div x
+            = 
+            "  
+            y  
+            " 
+        > foo </ bar >
+        < div foo = " translate ( 1 , 1 ) translate ( 1 , 1 ) " ></ div >
+        < div >
+        < div />
+        < div style="
+            color: rgba( 
+                200 ,  
+                300 ,   
+                2 ,  
+                .18 ) ;
+            background: blue ;
+        " > </ div >
+    `
+    window.moreTextRdy = ` < div x = " y " > foo < / bar > <div foo = " translate ( 1 , 1 ) translate ( 1 , 1 ) " ></div> <div > <div /> < div style=" color: rgba( 200 , 300 , 2 , .18 ) ; background: blue ; " > </div> `
 
     // bench
     //     .add("3.0.1-1", () => {
@@ -163,15 +201,26 @@
         .add("clean old", () => {
             cleanInputString_old(complexText)
         })
-        .add("clean new - 1", () => {
-            cleanInputString_new_1(complexText)
+        // .add("clean new - 1", () => {
+        //     cleanInputString_new_1(complexText)
+        // })
+        // .add("clean new - 2", () => {
+        //     cleanInputString_new_2(complexText)
+        // })
+        // .add("clean new - 3", () => {
+        //     cleanInputString_new_3(complexText)
+        // })
+        .add("clean new - 4", () => {
+            cleanInputString_new_4(complexText)
         })
-        .add("clean new - 2", () => {
-            cleanInputString_new_2(complexText)
+        .add("clean new - 5", () => {
+            cleanInputString_new_5(complexText)
         })
-        .run({ "async": false, "queued": true })
+        .add("clean new - 6", () => {
+            cleanInputString_new_6(complexText)
+        })
+        // .run({ "async": false, "queued": true })
 
-    console.log(removeComments(complexText))
     function cleanInputString_old(tagText, options = { removeComments: true }){
         if(options.removeComments){
             tagText = removeComments(tagText)
@@ -239,60 +288,187 @@
         return tagText
     }
 
-    /* DOCUMENTATION?
-    var x = `   ` // a tab
-    x.indexOf("\t") // -1 => no tabs in template strings just spaces.
-    0. 
-    "\t"
+    /* 
+        DOCUMENTATION?
+        var x = `   ` // a tab
+        x.indexOf("\t") // -1 => no tabs in template strings just spaces.
+
+        // FIRST TRY (sets and groups)
+        1.
+        " <"
+        " >"
+        " '"
+        " ""
+        " ("
+        " )"
+        " ,"
+        " ;"
+        \s([<>'\\(\),;])
+
+        2.
+        "> "
+        "( "
+        ([>\(])\s
+
+        3.
+        ")\" >"
+        (\)\")\s
+
+        4.
+        "=\" "
+        (\=\")\s
+
+        5.
+        " />"
+        \s(\/\>)
+
+        6.
+        "= \""
+        "; """
+        ([\=;])\s(\") <------ correction! (@im missing)
+        TOTAL: \s([<>'\\(\),;])|([>\(])\s|(\)\")\s|(\=\")\s|\s(\/\>)|(\=)\s(\")
+
+        // IM MISSING TO CLEAN:
+        7db9e8 100%); ">
+            /; ">/
+            /; "/   [x]
+        transform="translate(1, 2) translate( 3,
+            /( /    <-------- allrdy comsumed (@3.) by /\s\(/ need to add a second run?
+            => maybe i can use /
+            /
+        attribute="foo, bar, baz "/>
+            / "/>/
+
+        
+        // SECOND TRY (only sets, lazy quantifiers rock!)
     
-    1. 
-    "  "
-    
-    2.
-    " <"
-    " >"
-    " '"
-    " \""
-    " ("
-    " )"
-    " ,"
-    " ;"
-    \s([<>'\\(\),;])
+        // remove space around (set)
+        " < "
+        " > "
+        " " "
+        " ' "
+        " ( "
+        " = "
+        \s([<>"'\(\=])\s <--- needed to make \s optional so it can be consumed by alternated rule aswell!
+        \s?(\/?[<>"'\(\=]\/?)\s? <--- needed to add optional / before and after, could further take \/?[<>]\/? out for performance reasons
 
-    3.
-    "> "
-    "( "
-    ([>\(])\s
+        // remove space before (set)
+        " )"
+        " ;"
+        " ,"
+        \s([\),;])
 
-    4.
-    ")\" >"
-    (\)\")\s
+        RESULT: 
+            \s?(\/?[<>"'\(\=]\/?)\s?
+            |
+            \s([\),;])
+            = \s?(\/?[<>"'\(\=]\/?)\s?|\s([\),;])
 
-    5.
-    "=\" "
-    (\=\")\s
+        BENCH AGAINST: 
+            \s?(\/?[<>]\/?)\s?
+            |
+            \s?(["'\(\=])\s?
+            |
+            \s([\),;])
+            = \s?(\/?[<>]\/?)\s?|\s?(["'\(\=])\s?|\s([\),;])
 
-    6.
-    " />"
-    \s(\/\>)
+        // THIRD TRY
+        // replacing space around \" and \' led to attributes hanging together.
+        // remove space around (set)
+        " < "
+        " > "
+        " ( "
+        " = "
+        \s?(\/?[<>(=]\/?)\s?
 
-    7.
-    "= \""
-    (\=)\s(\")
-    TOTAL: \s([<>'\\(\),;])|([>\(])\s|(\)\")\s|(\=\")\s|\s(\/\>)|(\=)\s(\")
-*/
-    function cleanInputString_new(tagText, options = { removeComments: true }){
+        // remove space before (set)
+        " ""
+        " '"
+        " )"
+        " ,"
+        " ;"
+        \s?(["'"),;])
+
+        // remove space after if preceded by =
+        // since the = should be allready consumed by the first regex part i need a positive lookbehind (maybe there is a better solution to that)
+        "=" "
+        "=' "
+        \s?(\=)\s?(["'])\s?
+
+        RESULT: \s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?
+
+    */
+    function cleanInputString_new_1(tagText, options = { removeComments: true }){
         // if(options.removeComments || hasComment()){
         if(options.removeComments){
             tagText = removeComments(tagText)
         }
 
-        tagText = tagText.replace(/\s{2,}/g, " ") // [x]
+        tagText = tagText.replace(/\s{2,}/g, " ")
+        tagText = tagText.replace(/\s([<>'\\(\),;])|([>\(])\s|(\)\")\s|(\=\")\s|\s(\/\>)|(\=)\s(\")/g, "$1$2$3$4$5$6$7") // [x]
+        
+        return tagText
+    }
+    function cleanInputString_new_2(tagText){
+        // preprocessing
+        tagText = removeComments(tagText)
+        tagText = tagText.replace(/\s{2,}/g, " ")
+        
+        tagText = tagText.replace(/\s([<>'\\(\),;])/g, "$1")
+        tagText = tagText.replace(/([>\(])\s/g, "$1")
+        tagText = tagText.replace(/(\)\")\s/g, "$1")
+        tagText = tagText.replace(/(\=\")\s/g, "$1")
+        tagText = tagText.replace(/\s(\/\>)/g, "$1")
+        tagText = tagText.replace(/(\=)\s(\")/g, "$1$2")
+        
+        return tagText
+    }
+    function cleanInputString_new_3(tagText){
+        // preprocessing
+        tagText = removeComments(tagText)
+        tagText = tagText.replace(/\s{2,}/g, " ")
+
         tagText = tagText.replace(/\s([<>'\\(\),;])|([>\(])\s|(\)\")\s|(\=\")\s|\s(\/\>)|(\=)\s(\")/g, "$1$2$3$4$5$6$7") // [x]
         
         return tagText
     }
     
+    function cleanInputString_new_4(tagText){
+        // preprocessing
+        tagText = removeComments(tagText)
+        tagText = tagText.replace(/\s{2,}/g, " ")
+
+        tagText = tagText.replace(/\s?(\/?[<>"'\(\=]\/?)\s?|\s([\),;])/g, "$1$2")
+        
+        return tagText
+    }
+    function cleanInputString_new_5(tagText){
+        // preprocessing
+        tagText = removeComments(tagText)
+        tagText = tagText.replace(/\s{2,}/g, " ")
+
+        tagText = tagText.replace(/\s?(\/?[<>]\/?)\s?|\s?(["'\(\=])\s?|\s([\),;])/g, "$1$2$3")
+        
+        return tagText
+    }
+    function cleanInputString_new_6(tagText){
+        // preprocessing
+        tagText = removeComments(tagText)
+        tagText = tagText.replace(/\s{2,}/g, " ")
+
+        tagText = tagText.replace(/\s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?/g, "$1$2$3$4")
+        
+        return tagText
+    }
+
+    window.clean1 = cleanInputString_new_1 // result: incomplete
+    window.clean2 = cleanInputString_new_2 // result: incomplete
+    window.clean3 = cleanInputString_new_3 // result: incomplete
+    window.clean4 = cleanInputString_new_4 // result: removes space btwn attributes but else its great!
+    window.clean5 = cleanInputString_new_5 // result: removes space btwn attributes but else its great!
+    window.clean6 = cleanInputString_new_6 // result: removes space btwn attributes but else its great!
+
+
     // solid
     function removeComments(text){
         let lines = text.split("\n")
