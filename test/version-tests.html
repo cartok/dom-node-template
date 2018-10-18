@@ -201,25 +201,13 @@
         .add("clean old", () => {
             cleanInputString_old(complexText)
         })
-        // .add("clean new - 1", () => {
-        //     cleanInputString_new_1(complexText)
-        // })
-        // .add("clean new - 2", () => {
-        //     cleanInputString_new_2(complexText)
-        // })
-        // .add("clean new - 3", () => {
-        //     cleanInputString_new_3(complexText)
-        // })
-        .add("clean new - 4", () => {
-            cleanInputString_new_4(complexText)
+        .add("clean new - single regex", () => {
+            cleanInputString_new_1(complexText)
         })
-        .add("clean new - 5", () => {
-            cleanInputString_new_5(complexText)
+        .add("clean new - split regex", () => {
+            cleanInputString_new_2(complexText)
         })
-        .add("clean new - 6", () => {
-            cleanInputString_new_6(complexText)
-        })
-        // .run({ "async": false, "queued": true })
+        .run({ "async": false, "queued": true })
 
     function cleanInputString_old(tagText, options = { removeComments: true }){
         if(options.removeComments){
@@ -398,60 +386,7 @@
         RESULT: \s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?
 
     */
-    function cleanInputString_new_1(tagText, options = { removeComments: true }){
-        // if(options.removeComments || hasComment()){
-        if(options.removeComments){
-            tagText = removeComments(tagText)
-        }
-
-        tagText = tagText.replace(/\s{2,}/g, " ")
-        tagText = tagText.replace(/\s([<>'\\(\),;])|([>\(])\s|(\)\")\s|(\=\")\s|\s(\/\>)|(\=)\s(\")/g, "$1$2$3$4$5$6$7") // [x]
-        
-        return tagText
-    }
-    function cleanInputString_new_2(tagText){
-        // preprocessing
-        tagText = removeComments(tagText)
-        tagText = tagText.replace(/\s{2,}/g, " ")
-        
-        tagText = tagText.replace(/\s([<>'\\(\),;])/g, "$1")
-        tagText = tagText.replace(/([>\(])\s/g, "$1")
-        tagText = tagText.replace(/(\)\")\s/g, "$1")
-        tagText = tagText.replace(/(\=\")\s/g, "$1")
-        tagText = tagText.replace(/\s(\/\>)/g, "$1")
-        tagText = tagText.replace(/(\=)\s(\")/g, "$1$2")
-        
-        return tagText
-    }
-    function cleanInputString_new_3(tagText){
-        // preprocessing
-        tagText = removeComments(tagText)
-        tagText = tagText.replace(/\s{2,}/g, " ")
-
-        tagText = tagText.replace(/\s([<>'\\(\),;])|([>\(])\s|(\)\")\s|(\=\")\s|\s(\/\>)|(\=)\s(\")/g, "$1$2$3$4$5$6$7") // [x]
-        
-        return tagText
-    }
-    
-    function cleanInputString_new_4(tagText){
-        // preprocessing
-        tagText = removeComments(tagText)
-        tagText = tagText.replace(/\s{2,}/g, " ")
-
-        tagText = tagText.replace(/\s?(\/?[<>"'\(\=]\/?)\s?|\s([\),;])/g, "$1$2")
-        
-        return tagText
-    }
-    function cleanInputString_new_5(tagText){
-        // preprocessing
-        tagText = removeComments(tagText)
-        tagText = tagText.replace(/\s{2,}/g, " ")
-
-        tagText = tagText.replace(/\s?(\/?[<>]\/?)\s?|\s?(["'\(\=])\s?|\s([\),;])/g, "$1$2$3")
-        
-        return tagText
-    }
-    function cleanInputString_new_6(tagText){
+    function cleanInputString_new_1(tagText){
         // preprocessing
         tagText = removeComments(tagText)
         tagText = tagText.replace(/\s{2,}/g, " ")
@@ -460,14 +395,21 @@
         
         return tagText
     }
+    function cleanInputString_new_2(tagText){
+        // preprocessing
+        tagText = removeComments(tagText)
+        tagText = tagText.replace(/\s{2,}/g, " ")
 
-    window.clean1 = cleanInputString_new_1 // result: incomplete
-    window.clean2 = cleanInputString_new_2 // result: incomplete
-    window.clean3 = cleanInputString_new_3 // result: incomplete
-    window.clean4 = cleanInputString_new_4 // result: removes space btwn attributes but else its great!
-    window.clean5 = cleanInputString_new_5 // result: removes space btwn attributes but else its great!
-    window.clean6 = cleanInputString_new_6 // result: removes space btwn attributes but else its great!
+        tagText = tagText.replace(/\s?(\/?[<>(]\/?)\s?/g, "$1")
+        tagText = tagText.replace(/\s?(["'),;])/g, "$1")
+        tagText = tagText.replace(/\s?(\=)\s?(["'])\s?/g, "$1$2")
+        
+        return tagText
+    }
 
+
+
+ 
 
     // solid
     function removeComments(text){
