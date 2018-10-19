@@ -3,13 +3,13 @@ const R = document.createRange()
 // https://jsperf.com/node-template-version-comparison
 // https://jsperf.com/react-vs-node-template-element-creation
 export default class NodeTemplate {
-    constructor(tagText, options) {
-        if(typeof tagText !== "string"){
+    constructor(text, options) {
+        if(typeof text !== "string"){
             throw new Error("You need to provide a HTML/XML/SVG String as first parameter.")
         }
         this.version = "3.0.1"
 
-        this.text = cleanInputString(tagText)
+        this.text = cleanInputString(text)
         try {
             this.fragment = R.createContextualFragment(this.text)
         } catch(error){
@@ -105,14 +105,14 @@ function removeComments(text){
     text = lines.join("")
     return text
 }
-function cleanInputString(tagText){
+function cleanInputString(text){
     // preprocessing
-    tagText = removeComments(tagText)
-    tagText = tagText.replace(/\s{2,}/g, " ")
+    text = removeComments(text)
+    text = text.replace(/\s{2,}/g, " ")
 
-    tagText = tagText.replace(/\s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?/g, "$1$2$3$4")
+    text = text.replace(/\s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?/g, "$1$2$3$4")
     
-    return tagText
+    return text
 }
 function getNodeReferences(fragment, options){
     const result = {
