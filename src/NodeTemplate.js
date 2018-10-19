@@ -26,6 +26,7 @@ export default class NodeTemplate {
     destroy(){
         // perf: use for-in
         // proof: https://jsperf.com/object-iteration-bench
+        // its wrong, see bench.object-iteration.html, just take forEach.
         let refs = this.refs
         if(refs){
             for(let k in refs){

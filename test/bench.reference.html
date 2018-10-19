@@ -1,0 +1,18 @@
+<!-- https://benchmarkjs.com/ -->
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/platform@1.3.5/platform.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/benchmark@2.1.4/benchmark.min.js"></script>
+<script>
+    window.bench = new Benchmark.Suite()
+        .on("start cycle", function(event){
+            console.log("starting cycle")
+        })
+        .on("cycle", function(event){
+            console.log(String(event.target))
+        })
+</script>
+
+<script>
+    // https://jsperf.com/dom-element-reference-access
+</script>
+ 

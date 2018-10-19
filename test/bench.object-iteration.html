@@ -1,0 +1,61 @@
+<!-- https://benchmarkjs.com/ -->
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/platform@1.3.5/platform.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/benchmark@2.1.4/benchmark.min.js"></script>
+<script>
+    window.bench = new Benchmark.Suite()
+        .on("start cycle", function(event){
+            console.log("starting cycle")
+        })
+        .on("cycle", function(event){
+            console.log(String(event.target))
+        })
+</script>
+
+<script>
+    // preparation
+    function randomString(length){
+        length = length > 8 ? 8 : length
+        let end = length + 2
+        return (Math.random() + 1).toString(36).substring(2,end)
+    }
+    function randomStrings(amount, length){
+        return Array.from({length: amount}, () => randomString(length))
+    }
+    const OBJ = randomStrings(10,8).reduce((acc, curr) => {
+        acc[curr] = randomString(10)
+        return acc
+    }, {})
+</script>
+
+<script>
+    bench
+        .add("Object.keys().forEach", function(){
+            let obj = Object.assign({}, OBJ)
+            Object.keys(obj).forEach(k => {
+                obj[k] = null
+            })
+        })
+        .add("Object.keys()-for-ordered", function(){
+            let obj = Object.assign({}, OBJ)
+            let ARR = Object.keys(obj)
+            let l = ARR.length - 1
+            for(let i = 0; i < l; i++){
+                obj[ARR[i]] = null
+            }
+        })
+        .add("Object.keys()-for-reversed-decrement-condition", function(){
+            let obj = Object.assign({}, OBJ)
+            let ARR = Object.keys(obj)
+            for(let i = ARR.length - 1; i--;){
+                obj[ARR[i]] = null
+            }
+        })
+        .add("for-in", function(){
+            let obj = Object.assign({}, OBJ)
+            for(var k in obj){
+                obj[k] = null
+            }
+        })
+        .run({ async: false })
+</script>
