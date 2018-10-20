@@ -1,13 +1,10 @@
 const presets = [
-  ["@babel/env", {
+  ["@babel/env", { 
     targets: {
-      edge: "16",
-      firefox: "61",
-      chrome: "68",
-      safari: "11.1"
+      browsers: "last 2 versions"
     },
-    useBuiltIns: "usage"
-  }]
+    useBuiltIns: "usage",
+  }],
 ]
 
 const plugins = [

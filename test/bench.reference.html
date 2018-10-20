@@ -14,5 +14,75 @@
 
 <script>
     // https://jsperf.com/dom-element-reference-access
+    function getNodeReferences(fragment, options){
+        const result = {
+            root: (fragment.childNodes.length === 1)
+                ? fragment.firstElementChild
+                : Array.from(fragment.childNodes),
+            refs: {},
+            ids: {},
+        }
+
+        if(options){
+            const { refs, ids } = options
+            // perf: use for-reverse-decement-condition
+            // proof:  https://jsperf.com/for-vs-foreach/75
+            // proof:  https://jsperf.com/reduce-vs-loop/12
+            if(refs){
+                for(let i = refs.length; i--;){
+                    result.refs[refs[i]] = fragment.querySelector(`[data-ref="${refs[i]}"]`)
+                }
+            }
+            if(ids){
+                for(let i = ids.length; i--;){
+                    result.ids[refs[i]] = fragment.getElementById(refs[i])
+                }
+            }
+        } else {
+            // perf: use for
+            // proof:  https://jsperf.com/for-vs-foreach/75
+            // perf: use recursion
+            // proof: https://jsperf.com/dom-traversal-recursive-vs-iterative
+            const nodes = Array.from(fragment.childNodes)
+            for(let i = nodes.length; i--;){
+                iterate(nodes[i], node => {
+                    // add data-ref references
+                    let ref = undefined
+                    if(node.dataset === undefined){
+                        ref = node.getAttribute("data-ref")
+                        if(ref !== null){
+                            result.refs[ref] = node
+                        }
+                    } else {
+                        ref = node.dataset.ref
+                        if(ref !== undefined){
+                            result.refs[ref] = node
+                        }
+                    }
+                    // add node id references
+                    if(node.id !== "") {
+                        result.ids[node.id] = node
+                    }
+                })
+            } 
+        }
+
+        return result
+    }
+    function iterate(node, callback){
+        if(node !== null){
+            if(!((node instanceof Node) && (node.nodeType === Node.ELEMENT_NODE))){
+                return
+            }
+            // execute callback
+            callback(node)
+            if(node.hasChildNodes()){
+                iterate(node.firstElementChild, callback)
+            }
+            if(node.nextElementSibling !== null){
+                iterate(node.nextElementSibling, callback)
+            }
+        }
+    }
 </script>
  
