@@ -1,5 +1,6 @@
 const webpack = require("webpack")
 const path = require("path")
+const TerserPlugin = require("terser-webpack-plugin")
 
 module.exports = {
     output: {
@@ -17,6 +18,28 @@ module.exports = {
                 },
             },
         ],
+    },
+    optimization: {
+        concatenateModules: false,
+        // minimize: false,
+        minimizer: [
+            new TerserPlugin({
+                cache: true,
+                parallel: true,
+                sourceMap: true,
+                terserOptions: {
+                    ecma: 8,
+                    compress: {
+                        drop_console: true,
+                    },
+                    mangle: {
+                        reserved: [
+                            "NodeTemplate",
+                        ],
+                    },
+                },
+            })
+        ]
     },
     plugins: [
         new webpack.optimize.OccurrenceOrderPlugin(true),
