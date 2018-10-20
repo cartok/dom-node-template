@@ -7,7 +7,7 @@ export default class NodeTemplate {
         if(typeof text !== "string"){
             throw new Error("You need to provide a HTML/XML/SVG String as first parameter.")
         }
-        this.version = "3.0.1"
+        this.version = "3.0.3"
 
         this.text = cleanInputString(text)
         try {
