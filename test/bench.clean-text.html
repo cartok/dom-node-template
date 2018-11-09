@@ -1,0 +1,573 @@
+<!-- https://benchmarkjs.com/ -->
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/platform@1.3.5/platform.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/benchmark@2.1.4/benchmark.min.js"></script>
+<script>
+    window.bench = new Benchmark.Suite()
+        .on("start cycle", function(event){
+            console.log("starting cycle")
+        })
+        .on("cycle", function(event){
+            console.log(String(event.target))
+        })
+</script>
+   
+<script src="https://cdn.jsdelivr.net/npm/dom-node-template@3.0.1-6/dist/bundle.js"></script>
+<script>
+    window.NodeTemplate_3016 = NodeTemplate
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/dom-node-template@3.0.1-1/dist/bundle.js"></script>
+<script>
+    window.NodeTemplate_3011 = NodeTemplate
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/dom-node-template@latest/build/bundle.js"></script>
+      
+
+<script>
+
+    window.simpleText = `
+        <div>
+            <div>
+                <div>
+                    <div>
+                        <div>
+                            <div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    `
+    window.complexText = `
+        <svg 
+            class="bbox"
+            >
+            <g  
+                data-ref="position-node" 
+                transform="translate(0, 0)"
+                >
+
+                // HOHOHOHOHOHOOHOHOHOHOHOHOHOOH
+                <g
+                    data-ref="container-node" 
+                    transform="translate(0, 0)"
+                    >
+                    
+                    <rect 
+                        data-ref="collision-node" 
+                        x="0" 
+                        y="0" 
+                        width="0" 
+                        height="0" 
+                        stroke="none" 
+                        stroke-width="0"
+                        fill="gray"
+                        />
+
+                    <svg 
+                        data-ref="border-node" 
+                        x="0"
+                        y="0"
+                        width="0"
+                        height="0"
+                        >
+                        <g 
+                            data-ref="border-group" 
+                            fill="black" 
+                            stroke="none" 
+                            stroke-width="0"
+                            >
+                            <polygon 
+                                data-ref="border-top" 
+                                points="0,0 0,0 0,0 0,0"
+                                />
+                            <polygon 
+                                data-ref="border-right" 
+                                points="0,0 0,0 0,0 0,0"
+                                />
+                            <polygon 
+                                data-ref="border-bottom" 
+                                points="0,0 0,0 0,0 0,0"
+                                />
+                            <polygon 
+                                data-ref="border-left" 
+                                points="0,0 0,0 0,0 0,0"
+                                />
+                        </g>
+                    </svg>
+
+                    // HOHOHOHOHOHOOHOHOHOHOHOHOHOOH
+                    <rect 
+                        data-ref="cursor-node"
+                        fill="transparent"
+                        stroke="none"
+                        stroke-width="0"
+                        x="0"
+                        y="0"
+                        width="0"
+                        height="0"
+                        />
+                </g>
+            </g>
+        </svg>
+
+        <div transform="translate(1, 2)
+            translate (
+                3,
+                4
+            )
+            translate(1px, 0px)
+            rotate(-0deg)
+            scale(0.5, 0.5)"
+            
+            style="
+                text-shadow: 1px 1px 2px black, 0 0 25px blue; 
+                color: rgba(200, 300,  2, .18 );
+                text-shadow: 0 0 3px #FF0000, 0 0 5px #0000FF;
+                background: url('img.gif') right bottom no-repeat, url('img.gif') left top repeat;
+                background: linear-gradient(to bottom, #1e5799 0%, #2989d8 50%, #207cca  51%, #7db9e8 100%);
+            ">
+        </div>
+
+        <div
+            src="https://.....sdfsdfsd.fs.de" hodor="file:///sdflksjdf"     // asldökfjasdfasdfasdfsdfsdfsdf
+            attribute="
+                foo,
+                bar,
+                baz
+            "/>
+    // sölkdfjsdf sdf
+        < div x
+            = 
+            "  
+            y  
+            " 
+        > foo </ bar >
+        < div foo = " translate ( 1 , 1 ) translate ( 1 , 1 ) " ></ div >
+        < div >
+        < div />
+        < div style="
+            color: rgba( 
+                200 ,  
+                300 ,   
+                2 ,  
+                .18 ) ;
+            background: blue ;
+        " > </ div >
+    `
+
+    window.moreText = `
+        < div x
+            = 
+            "  
+            y  
+            " 
+        > foo </ bar >
+        < div foo = " translate ( 1 , 1 ) translate ( 1 , 1 ) " ></ div >
+        < div >
+        < div />
+        < div style="
+            color: rgba( 
+                200 ,  
+                300 ,   
+                2 ,  
+                .18 ) ;
+            background: blue ;
+        " > </ div >
+    `
+    window.moreTextRdy = ` < div x = " y " > foo < / bar > <div foo = " translate ( 1 , 1 ) translate ( 1 , 1 ) " ></div> <div > <div /> < div style=" color: rgba( 200 , 300 , 2 , .18 ) ; background: blue ; " > </div> `
+
+    // bench
+    //     .add("3.0.1-1", () => {
+    //         let complex3011 = new NodeTemplate_3011(complexText)
+    //     })
+    //     .add("3.0.1-6", () => {
+    //         let complex3016 = new NodeTemplate_3016(complexText)
+    //     })
+    //     .run({ "async": true, "queued": true })
+
+    bench
+        .add("clean old", () => {
+            cleanInputString_old(complexText)
+        })
+        .add("clean new - single regex", () => {
+            cleanInputString_new_1(complexText)
+        })
+        .add("clean new - split regex", () => {
+            cleanInputString_new_2(complexText)
+        })
+        .run({ "async": false, "queued": true })
+
+    function cleanInputString_old(tagText, options = { removeComments: true }){
+        if(options.removeComments){
+            tagText = removeComments(tagText)
+        }
+
+        // remove all newlines, tabs and returns from the tagText string to create one line
+        // regex: [\n\t\r]
+        // subst: null
+        tagText = tagText.replace(/[\n\t\r]/g, "")
+
+        // style multiline specific:
+        // ------------------------------------------------------------------
+        // remove all spaces > 2 
+        // regex: \s{2,}
+        // subst: null
+        tagText = tagText.replace(/\s{2,}/g, " ")
+        
+        // add space after every ; in style attributes
+        // regex: ;([^\s])
+        // subst: ; $1
+        tagText = tagText.replace(/;([^\s])/g, "; $1")
+        
+        // remove space before "> close combination
+        // regex: \s(">)
+        // subst: $1
+        tagText = tagText.replace(/\s(">)/g, "$1")    
+
+        // ------------------------------------------------------------------
+
+        // remove all whitespace between tags but not inside of tags
+        // regex: >\s*<
+        // subst: ><
+        tagText = tagText.replace(/>\s*</g, "><")
+
+        // remove all whitespace before the first tag or after the last tag
+        // regex: ^(\s*)|(\s*)$
+        // subst: null
+        tagText = tagText.replace(/^(\s*)|(\s*)$/g, "")
+
+        // remove spaces before tagText nodes
+        // regex: >\s*
+        // subst: >
+        tagText = tagText.replace(/>\s*/g, ">")
+        
+        // remove spaces after tagText nodes
+        // regex: \s*<
+        // subst: <
+        tagText = tagText.replace(/\s*</g, "<")
+
+        // remove space between opening tag and first attribute
+        // regex: (<\w*)(\s{2,})
+        // subst: $1\s
+        tagText = tagText.replace(/(<\w+)(\s{2,})/g, "$1 ")
+
+        // remove space between attributes (trailing space)
+        // regex: ([\w-_]+="[\w\s-_]+")(\s*(?!>))
+        // subst: $1\s
+        tagText = tagText.replace(/([\w-_]+="[\w\s-_]+")(\s*(?!>))/g, "$1 ")
+
+        // remove space between last attribute and closing tag
+        // regex: (\w+="\w+")(\s+)>
+        // subst: $1>
+        tagText = tagText.replace(/([\w-_]+="[\w\s-_]+")(\s{2,})>/g, "$1>")
+        
+        return tagText
+    }
+
+    /* 
+        DOCUMENTATION?
+        var x = `   ` // a tab
+        x.indexOf("\t") // -1 => no tabs in template strings just spaces.
+
+        // FIRST TRY (sets and groups)
+        1.
+        " <"
+        " >"
+        " '"
+        " ""
+        " ("
+        " )"
+        " ,"
+        " ;"
+        \s([<>'\\(\),;])
+
+        2.
+        "> "
+        "( "
+        ([>\(])\s
+
+        3.
+        ")\" >"
+        (\)\")\s
+
+        4.
+        "=\" "
+        (\=\")\s
+
+        5.
+        " />"
+        \s(\/\>)
+
+        6.
+        "= \""
+        "; """
+        ([\=;])\s(\") <------ correction! (@im missing)
+        TOTAL: \s([<>'\\(\),;])|([>\(])\s|(\)\")\s|(\=\")\s|\s(\/\>)|(\=)\s(\")
+
+        // IM MISSING TO CLEAN:
+        7db9e8 100%); ">
+            /; ">/
+            /; "/   [x]
+        transform="translate(1, 2) translate( 3,
+            /( /    <-------- allrdy comsumed (@3.) by /\s\(/ need to add a second run?
+            => maybe i can use /
+            /
+        attribute="foo, bar, baz "/>
+            / "/>/
+
+        
+        // SECOND TRY (only sets, lazy quantifiers rock!)
+    
+        // remove space around (set)
+        " < "
+        " > "
+        " " "
+        " ' "
+        " ( "
+        " = "
+        \s([<>"'\(\=])\s <--- needed to make \s optional so it can be consumed by alternated rule aswell!
+        \s?(\/?[<>"'\(\=]\/?)\s? <--- needed to add optional / before and after, could further take \/?[<>]\/? out for performance reasons
+
+        // remove space before (set)
+        " )"
+        " ;"
+        " ,"
+        \s([\),;])
+
+        RESULT: 
+            \s?(\/?[<>"'\(\=]\/?)\s?
+            |
+            \s([\),;])
+            = \s?(\/?[<>"'\(\=]\/?)\s?|\s([\),;])
+
+        BENCH AGAINST: 
+            \s?(\/?[<>]\/?)\s?
+            |
+            \s?(["'\(\=])\s?
+            |
+            \s([\),;])
+            = \s?(\/?[<>]\/?)\s?|\s?(["'\(\=])\s?|\s([\),;])
+
+        // THIRD TRY
+        // replacing space around \" and \' led to attributes hanging together.
+        // remove space around (set)
+        " < "
+        " > "
+        " ( "
+        " = "
+        \s?(\/?[<>(=]\/?)\s?
+
+        // remove space before (set)
+        " ""
+        " '"
+        " )"
+        " ,"
+        " ;"
+        \s?(["'"),;])
+
+        // remove space after if preceded by =
+        // since the = should be allready consumed by the first regex part i need a positive lookbehind (maybe there is a better solution to that)
+        "=" "
+        "=' "
+        \s?(\=)\s?(["'])\s?
+
+        RESULT: \s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?
+
+    */
+    function cleanInputString_new_1(tagText){
+        // preprocessing
+        tagText = removeComments(tagText)
+        tagText = tagText.replace(/\s{2,}/g, " ")
+
+        tagText = tagText.replace(/\s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?/g, "$1$2$3$4")
+        
+        return tagText
+    }
+    function cleanInputString_new_2(tagText){
+        // preprocessing
+        tagText = removeComments(tagText)
+        tagText = tagText.replace(/\s{2,}/g, " ")
+
+        tagText = tagText.replace(/\s?(\/?[<>(]\/?)\s?/g, "$1")
+        tagText = tagText.replace(/\s?(["'),;])/g, "$1")
+        tagText = tagText.replace(/\s?(\=)\s?(["'])\s?/g, "$1$2")
+        
+        return tagText
+    }
+
+
+
+ 
+
+    // solid
+    function removeComments(text){
+        let lines = text.split("\n")
+        for(let i = lines.length; i--;){
+            let position = lines[i].indexOf("//")
+            let found = (position !== -1)
+            if(found){
+                if(position > 0){
+                    // skip 'https://' and 'file:///'
+                    let precedingChar = lines[i].charAt(position - 1)
+                    let followingChar = lines[i].charAt(position + 2)
+                    let subPosition = null
+                    while(precedingChar === ":"){
+                        if(followingChar === "/"){
+                            // continue search in substring
+                            position += 3
+                            subPosition = lines[i].substring(position).indexOf("//")                
+                        } else {
+                            // continue search in substring
+                            position += 2
+                            subPosition = lines[i].substring(position).indexOf("//")                
+                        }
+                        found = (subPosition !== -1)
+                        if(found){
+                            // repeat
+                            position += subPosition
+                            precedingChar = lines[i].charAt(position - 1)
+                            followingChar = lines[i].charAt(position + 2)   
+                        } else {
+                            // while-loop: nothing found => finish search
+                            break
+                        }
+                    }
+                    // for-loop: nothing found after detecting https:// or file:/// => next line
+                    if(!found){
+                        continue
+                    }
+                }
+                // remove comment
+                lines[i] = lines[i].substring(0, position)
+            }
+        }
+        text = lines.join("")
+        return text
+    }
+
+
+
+
+
+    // REFERENCES BENCH
+    // const fragment = document.createRange().createContextualFragment(cleanInputString_old(complexText))
+    // bench
+        // .add("add references old", () => {
+        //     getNodeReferences_old(fragment)
+        // })
+        // .add("add references new", () => {
+        //     getNodeReferences(fragment)
+        // })
+        // .run({ "async": true, "queued": true })
+        // result: not much difference in a normal use case
+    
+    function getNodeReferences(fragment, options){
+        const result = {
+            root: (fragment.childNodes.length === 1)
+                ? fragment.firstElementChild
+                : Array.from(fragment.childNodes),
+            refs: {},
+            ids: {},
+        }
+
+        if(options){
+            const { refs, ids } = options
+            // perf: use for-reverse-decement-condition
+            // proof:  https://jsperf.com/for-vs-foreach/75
+            // proof:  https://jsperf.com/reduce-vs-loop/12
+            if(refs){
+                for(let i = refs.length; i--;){
+                    result.refs[refs[i]] = fragment.querySelector(`[data-ref="${refs[i]}"]`)
+                }
+            }
+            if(ids){
+                for(let i = ids.length; i--;){
+                    result.ids[refs[i]] = fragment.getElementById(refs[i])
+                }
+            }
+        } else {
+            // perf: use for
+            // proof:  https://jsperf.com/for-vs-foreach/75
+            // perf: use recursion
+            // proof: https://jsperf.com/dom-traversal-recursive-vs-iterative
+            const nodes = Array.from(fragment.childNodes)
+            for(let i = nodes.length; i--;){
+                iterate(nodes[i], node => {
+                    // add data-ref references
+                    let ref = undefined
+                    if(node.dataset === undefined){
+                        ref = node.getAttribute("data-ref")
+                        if(ref !== null){
+                            result.refs[ref] = node
+                        }
+                    } else {
+                        ref = node.dataset.ref
+                        if(ref !== undefined){
+                            result.refs[ref] = node
+                        }
+                    }
+                    // add node id references
+                    if(node.id !== "") {
+                        result.ids[node.id] = node
+                    }
+                })
+            } 
+        }
+
+        return result
+    }
+    function getNodeReferences_old(fragment){
+        // add element references from 'data-tref' and 'id' attributes
+        const result = {
+            root: (fragment.childNodes.length === 1)
+                ? fragment.firstElementChild
+                : Array.from(fragment.childNodes),
+            refs: {},
+            ids: {},
+        }
+        Array.from(fragment.childNodes).forEach(tagGroup => iterate(tagGroup, n => {
+            // add data-ref references
+            let ref = undefined
+            if(n.dataset === undefined){
+                ref = n.getAttribute("data-ref")
+                if(ref !== null){
+                    result.refs[ref] = n
+                }
+            } else {
+                ref = n.dataset.ref
+                if(ref !== undefined){
+                    result.refs[ref] = n
+                }
+            }
+            // add node id references
+            if (n.id !== "") {
+                result.ids[n.id] = n
+            }
+        }))
+        return result
+    }
+
+    function iterate(node, callback){
+        if(node !== null){
+            if(!((node instanceof Node) && (node.nodeType === Node.ELEMENT_NODE))){
+                return
+            }
+            // execute callback
+            callback(node)
+            if(node.hasChildNodes()){
+                iterate(node.firstElementChild, callback)
+            }
+            if(node.nextElementSibling !== null){
+                iterate(node.nextElementSibling, callback)
+            }
+        }
+    }
+</script>

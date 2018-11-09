@@ -1,16 +1,12 @@
-.gitignore 
-
+/.vscode/
+/benchmark/
+/mochawesome-report/
+/node_modules/
 /test/
 
-/node_modules/
-/bin/
-
-README.md.advancedexample
-
-package-lock.json
-yarn.lock
+.eslintrc.js
+.flowconfig
+.gitignore 
+.webpack.config.js
+babel.config.*js
 yarn-error-log
-
-.babelrc
-
-/thesis/

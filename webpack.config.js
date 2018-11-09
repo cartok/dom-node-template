@@ -1,14 +1,13 @@
 const webpack = require("webpack")
 const path = require("path")
+const TerserPlugin = require("terser-webpack-plugin")
 
 module.exports = {
-    // entry:  path.resolve(__dirname, "src/index"),
     output: {
         filename: "bundle.js",
         sourceMapFilename : "[file].map",
-        path: path.resolve(__dirname, "build"),
     },
-    devtool: "inline-source-map",
+    devtool: "source-map",
     module: {
         rules: [
             {
@@ -20,10 +19,29 @@ module.exports = {
             },
         ],
     },
+    optimization: {
+        concatenateModules: false,
+        // minimize: false,
+        minimizer: [
+            new TerserPlugin({
+                cache: true,
+                parallel: true,
+                sourceMap: true,
+                terserOptions: {
+                    ecma: 8,
+                    compress: {
+                        drop_console: true,
+                    },
+                    mangle: {
+                        reserved: [
+                            "NodeTemplate",
+                        ],
+                    },
+                },
+            })
+        ]
+    },
     plugins: [
-        new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
-        }),
         new webpack.optimize.OccurrenceOrderPlugin(true),
     ],
 }

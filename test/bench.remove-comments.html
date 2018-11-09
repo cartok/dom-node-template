@@ -1,0 +1,197 @@
+
+<!-- https://benchmarkjs.com/ -->
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/platform@1.3.5/platform.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/benchmark@2.1.4/benchmark.min.js"></script>
+<script>
+    window.bench = new Benchmark.Suite()
+        .on("start cycle", function(event){
+            console.log("starting cycle")
+        })
+        .on("cycle", function(event){
+            console.log(String(event.target))
+        })
+</script>
+
+<script>
+    function removeCommentsRegex(text, options = {}){
+        if(options.clearLinebreaks){
+            text = text.replace(/\n|\s*(?<![\:\/])\/{2}.*$/gm, "")
+        } else {
+            text = text.replace(/\s*(?<![\:\/])\/{2}.*$/gm, "")
+        }
+        return text
+    }
+    function removeCommentsLoop(text, options = {}){
+        let lines = text.split("\n")
+        for(let i = lines.length; i--;){
+            let position = lines[i].indexOf("//")
+            let found = (position !== -1)
+            if(found){
+                if(position > 0){
+                    // skip 'https://' and 'file:///'
+                    let precedingChar = lines[i].charAt(position - 1)
+                    let followingChar = lines[i].charAt(position + 2)
+                    let subPosition = null
+                    while(precedingChar === ":"){
+                        if(followingChar === "/"){
+                            // continue search in substring
+                            position += 3
+                            subPosition = lines[i].substring(position).indexOf("//")                
+                        } else {
+                            // continue search in substring
+                            position += 2
+                            subPosition = lines[i].substring(position).indexOf("//")                
+                        }
+                        found = (subPosition !== -1)
+                        if(found){
+                            // repeat
+                            position += subPosition
+                            precedingChar = lines[i].charAt(position - 1)
+                            followingChar = lines[i].charAt(position + 2)   
+                        } else {
+                            // while-loop: nothing found => finish search
+                            break
+                        }
+                    }
+                    // for-loop: nothing found after detecting https:// or file:/// => next line
+                    if(!found){
+                        continue
+                    }
+                }
+                // remove comment
+                lines[i] = lines[i].substring(0, position)
+            }
+        }
+        if(options.clearLinebreaks){
+            text = lines.join("")
+        } else {
+            text = lines.join("\n")
+        }
+        return text
+    }
+    function cleanInputStringFullRegex(text){
+        text = removeCommentsRegex(text, { clearLinebreaks: true })
+        text = text.replace(/\s{2,}/g, " ")
+        text = text.replace(/\s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?/g, "$1$2$3$4")
+        return text
+    }
+    function cleanInputStringLoopAndRegex(text){
+        text = removeCommentsLoop(text, { clearLinebreaks: true })
+        text = text.replace(/\s{2,}/g, " ")
+        text = text.replace(/\s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?/g, "$1$2$3$4")
+        return text
+    }
+</script>
+
+<script>
+    const crazyText = `
+        // foo <bar></bar>
+        <tag // single space
+            attribute="value" // single space
+            src="https://will-this-work?"        // random
+            src="
+                https://will-this-work?
+            "
+            src="https://will-this-work?" href="https://hodor-is-the-best" and="file:///home/cartok"    // works?
+            > // single space
+        </tag>
+        <tag    // single tab
+            attribute="value"   // single tab
+            >    // single tab
+        </tag>   // single tab
+        <tag             // random
+            attribute="value"         // random
+            >            // random
+        </tag>      // random
+    // newline
+    // space
+        // tab
+            // random
+
+
+    `
+    const realisticText = `
+        <svg class="sia-bbox drawable">
+            <g data-ref="position-node" transform="translate(0, 0)">
+                <g data-ref="container-node" transform="translate(0, 0)">
+
+                    // the collision nodes boundaries are the actual data values
+                    <rect data-ref="collision-node" x="0" y="0" width="0" height="0" stroke="none" stroke-width="0"/>
+
+                    // the border nodes boundaries include the collision node and borders
+                    <svg data-ref="border-node" x="0" y="0" width="0" height="0">
+                        <g data-ref="border-group" fill="black" stroke="none" stroke-width="0">
+                            <polygon data-ref="border-top" points="0,0 0,0 0,0 0,0"/>
+                            <polygon data-ref="border-right" points="0,0 0,0 0,0 0,0"/>
+                            <polygon data-ref="border-bottom" points="0,0 0,0 0,0 0,0"/>
+                            <polygon data-ref="border-left" points="0,0 0,0 0,0 0,0"/>
+                        </g>
+                    </svg>
+
+                    // the cursor nodes boundaries should include menu and borders (does not include menu right now 18.04.18)
+                    <rect data-ref="cursor-node" x="0" y="0" width="0" height="0" fill="transparent" stroke="none" stroke-width="0"/>
+
+                </g>
+            </g>
+        </svg>
+    `
+</script>
+
+<script>
+    bench
+        .add("crazy text: regex", function(){
+            removeCommentsRegex(crazyText)
+        })
+        .add("crazy text: loop", function(){
+            removeCommentsLoop(crazyText)
+        })
+        
+        .add("crazy text: regex, clear linebreaks", function(){
+            removeCommentsRegex(crazyText, { clearLinebreaks: true })
+        })
+        .add("crazy text: loop, clear linebreaks", function(){
+            removeCommentsLoop(crazyText, { clearLinebreaks: true })
+        })
+        
+
+        .add("realistic text: regex", function(){
+            removeCommentsRegex(realisticText)
+        })
+        .add("realistic text: loop", function(){
+            removeCommentsLoop(realisticText)
+        })
+
+        .add("realistic text: regex, clear linebreaks", function(){
+            removeCommentsRegex(realisticText, { clearLinebreaks: true })
+        })
+        .add("realistic text: loop, clear linebreaks", function(){
+            removeCommentsLoop(realisticText, { clearLinebreaks: true })
+        })
+        
+        // FULL CLEANUP
+        .add("crazy text: full clean regex", function(){
+            cleanInputStringFullRegex(crazyText)
+        })
+        .add("crazy text: full clean loop & regex", function(){
+            cleanInputStringLoopAndRegex(crazyText)
+        })
+        
+        .add("realistic text: full clean regex", function(){
+            cleanInputStringFullRegex(realisticText)
+        })
+        .add("realistic text: full clean loop & regex", function(){
+            cleanInputStringLoopAndRegex(realisticText)
+        })
+        // .run({ 'async': false })
+</script>
+
+<script>
+    // proof
+    // console.log(removeCommentsRegex(realisticText, { clearLinebreaks: true }))
+    // console.log(removeCommentsLoop(realisticText, { clearLinebreaks: true }))
+    console.log(cleanInputStringFullRegex(realisticText, { clearLinebreaks: true }))
+    console.log(cleanInputStringLoopAndRegex(realisticText, { clearLinebreaks: true }))
+</script>
+
+

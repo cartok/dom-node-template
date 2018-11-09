@@ -1,0 +1,238 @@
+<!-- https://benchmarkjs.com/ -->
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/platform@1.3.5/platform.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/benchmark@2.1.4/benchmark.min.js"></script>
+<script>
+    window.bench = new Benchmark.Suite()
+        .on("start cycle", function(event){
+            console.log("starting cycle")
+        })
+        .on("cycle", function(event){
+            console.log(String(event.target))
+        })
+</script>
+
+<script>
+    function removeComments(text){
+        let lines = text.split("\n")
+        for(let i = lines.length; i--;){
+            let position = lines[i].indexOf("//")
+            let found = (position !== -1)
+            if(found){
+                if(position > 0){
+                    // skip 'https://' and 'file:///'
+                    let precedingChar = lines[i].charAt(position - 1)
+                    let followingChar = lines[i].charAt(position + 2)
+                    let subPosition = null
+                    while(precedingChar === ":"){
+                        if(followingChar === "/"){
+                            // continue search in substring
+                            position += 3
+                            subPosition = lines[i].substring(position).indexOf("//")                
+                        } else {
+                            // continue search in substring
+                            position += 2
+                            subPosition = lines[i].substring(position).indexOf("//")                
+                        }
+                        found = (subPosition !== -1)
+                        if(found){
+                            // repeat
+                            position += subPosition
+                            precedingChar = lines[i].charAt(position - 1)
+                            followingChar = lines[i].charAt(position + 2)   
+                        } else {
+                            // while-loop: nothing found => finish search
+                            break
+                        }
+                    }
+                    // for-loop: nothing found after detecting https:// or file:/// => next line
+                    if(!found){
+                        continue
+                    }
+                }
+                // remove comment
+                lines[i] = lines[i].substring(0, position)
+            }
+        }
+        text = lines.join("")
+        return text
+    }
+    function cleanInputString(tagText){
+        // preprocessing
+        tagText = removeComments(tagText)
+        tagText = tagText.replace(/\s{2,}/g, " ")
+
+        tagText = tagText.replace(/\s?(\/?[<>(]\/?)\s?|\s?(["'),;])|\s?(\=)\s?(["'])\s?/g, "$1$2$3$4")
+        
+        return tagText
+    }
+</script>
+
+<script>
+    window.boxText = `
+        <svg class="sia-bbox drawable">
+            <g data-ref="position-node" transform="translate(0, 0)">
+                <g data-ref="container-node" transform="translate(0, 0)">
+
+                    // the collision nodes boundaries are the actual data values
+                    <rect data-ref="collision-node" x="0" y="0" width="0" height="0" stroke="none" stroke-width="0"/>
+    
+                    // the border nodes boundaries include the collision node and borders
+                    <svg data-ref="border-node" x="0" y="0" width="0" height="0">
+                        <g data-ref="border-group" fill="black" stroke="none" stroke-width="0">
+                            <polygon data-ref="border-top" points="0,0 0,0 0,0 0,0"/>
+                            <polygon data-ref="border-right" points="0,0 0,0 0,0 0,0"/>
+                            <polygon data-ref="border-bottom" points="0,0 0,0 0,0 0,0"/>
+                            <polygon data-ref="border-left" points="0,0 0,0 0,0 0,0"/>
+                        </g>
+                    </svg>
+
+                    // the cursor nodes boundaries should include menu and borders (does not include menu right now 18.04.18)
+                    <rect data-ref="cursor-node" x="0" y="0" width="0" height="0" fill="transparent" stroke="none" stroke-width="0"/>
+
+                </g>
+            </g>
+        </svg>
+    `
+    window.boxText = cleanInputString(window.boxText)
+</script>
+
+<script>
+    function createTagGroupStrings_iterative(tagText){
+        // outer context
+        const tagGroups = []
+
+        // execute tag group creation
+        while(tagText.length > 0){
+            const firstTagName = (() => {
+                let matches = tagText.match(/^<([a-zA-Z\d]+)/)
+                return (matches !== null) ? matches[1] : undefined
+            })()
+            let tagGroupString = createTagGroupString(firstTagName, false)
+            if(tagGroupString !== undefined){
+                tagGroups.push(tagGroupString)
+            } else {
+                throw new Error("Function createTagGroupString() returned 'undefined'.")
+            }
+        }
+
+        function createTagGroupString(firstTagName, debug){
+            
+            let tagGroupString = ""
+            
+            let unclosedTagCnt = 0
+            const unclosedTagExist = () => unclosedTagCnt !== 0
+            
+            const openingTagRegex = new RegExp(`^(<${firstTagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${firstTagName}|<${firstTagName}))))`)
+            const closingTagRegex = new RegExp(`^(<\\/${firstTagName}>(?:.*?)(?=(?:<\\/${firstTagName})|(?:<${firstTagName}))|(?:<\\/${firstTagName}>))`)
+
+            do{
+                
+                let openingTagMatches = undefined
+                let closingTagMatches = undefined
+                    
+                // 1. accumulate opening tags
+                do {
+                    openingTagMatches = tagText.match(openingTagRegex)
+                    if(openingTagMatches !== null && openingTagMatches[0] !== undefined){
+                        tagText = tagText.substring(openingTagMatches[0].length)
+                        tagGroupString += openingTagMatches[0]
+                        // no need to accumulate if the tag is a selfclosing tag 
+                        if(openingTagMatches[2] === "/>"){
+                            if(!unclosedTagExist()){
+                                return tagGroupString
+                            } else {
+                                openingTagMatches = tagText.match(openingTagRegex)
+                                continue
+                            }
+                        } else {
+                            unclosedTagCnt += 1
+                        }
+                    }
+                } while(openingTagMatches !== null && openingTagMatches[0] !== undefined)
+
+                // 2. accumulate closing tags
+                do {
+                    closingTagMatches = tagText.match(closingTagRegex)
+                    if(closingTagMatches !== null && closingTagMatches[0] !== undefined){
+                        tagText = tagText.substring(closingTagMatches[0].length)
+                        tagGroupString += closingTagMatches[0]
+                        unclosedTagCnt -= 1
+                    }
+                } while(closingTagMatches !== null && closingTagMatches[0] !== undefined)
+
+            } while(unclosedTagExist())
+            
+            return tagGroupString
+        }
+
+        // check result
+        if(tagGroups.length < 1){
+            throw new Error(`Could not create tag groups for '${tagText}'`)
+        } else {
+            return tagGroups
+        }
+    }
+    function createTagGroupStrings_recursive(tagText, array = []){
+        if(tagText.length > 0){
+            const firstTagName = (() => {
+                let matches = tagText.match(/^<([a-zA-Z\d]+)/)
+                return (matches !== null) ? matches[1] : undefined
+            })()
+            array.push(createGroup(tagText, firstTagName))
+            return createTagGroupStrings_recursive(tagText.substr(array[array.length-1].length), array)
+        } else {
+            return array
+        }
+        function createGroup(text, tagName, tagStr = "", unclosed = undefined){
+            const openingTagRegex = new RegExp(`^(<${tagName}(?:[^\\/>]*)(?:(?=((\\/)>))\\2|(?:>.*?(?=<\\/${tagName}|<${tagName}))))`)
+            const closingTagRegex = new RegExp(`^(<\\/${tagName}>(?:.*?)(?=(?:<\\/${tagName})|(?:<${tagName}))|(?:<\\/${tagName}>))`)
+            const unclosedTagExist = () => unclosed !== 0
+            
+            if(!unclosedTagExist()){
+                // finish recursion
+                return tagStr
+            } else {
+                unclosed = (unclosed === undefined) ? 0 : unclosed
+                // 1. accumulate opening tags
+                let openMatch = text.match(openingTagRegex)
+                if(openMatch !== null && openMatch[0] !== undefined){
+                    // no need to accumulate if the tag is a selfclosing tag 
+                    if(openMatch[2] === "/>"){
+                        if(!unclosedTagExist()){
+                            return openMatch[0]
+                        } else {
+                            return tagStr + createGroup(text.substr(openMatch[0].length), tagName, openMatch[0], unclosed)
+                        }
+                    } 
+                    else {
+                        return tagStr + createGroup(text.substr(openMatch[0].length), tagName, openMatch[0], ++unclosed)
+                    }
+                }
+                
+                // 2. accumulate closing tags
+                let closeMatch = text.match(closingTagRegex)
+                if(closeMatch !== null && closeMatch[0] !== undefined){
+                    return tagStr + createGroup(text.substr(closeMatch[0].length), tagName, closeMatch[0], --unclosed)
+                }
+            }
+        }
+    }
+</script>
+
+<script>
+    const suite = new Benchmark.Suite;
+
+    // add tests 
+    suite
+    .add('iterative', function(){
+        createTagGroupStrings_iterative(boxText)
+    })
+    .add('recursive', function(){
+        createTagGroupStrings_recursive(boxText)
+    })
+    .on('cycle', function(event) {
+        console.log(String(event.target))
+    })
+    .run({ 'async': false })
+</script>

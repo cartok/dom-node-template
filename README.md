@@ -114,19 +114,4 @@ $(appView.html.refs["something"]).on("click", () => {
 
 // or just
 list.add("music")
-
 ```
-
-**Advantages/Comparison (incomplete section):**
-```javascript
-const html = new NodeTemplate(`
-    <div id="app-container">
-        <h1>foo</h1>
-        <div id="app-bar">
-
-        </div>
-    </div>
-`)
-```
-
-
