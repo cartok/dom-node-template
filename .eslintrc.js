@@ -2,23 +2,29 @@ module.exports = {
     env: {
         browser: true,
         es6: true,
+        node: true,
         mocha: true,
     },
     parser: "babel-eslint",
     parserOptions: {
         ecmaFeatures: {
-            jsx: true,
             impliedStrict: true
         },
         ecmaVersion: 6,
         sourceType: "module"
     },
     rules: {
-        "no-const-assign": "warn",
-        "no-this-before-super": "warn",
+        "import/first": "off",
+        "no-useless-escape": "off",
+        "default-case": "off",
+        "no-redeclare": "off",
+        "no-unused-vars": "warn",
+        "no-unused-expressions": "warn",
+        "no-restricted-globals": "warn",
+        "no-const-assign": "error",
+        "no-this-before-super": "error",
         "no-undef": "warn",
         "no-unreachable": "warn",
-        "no-unused-vars": "off",
         "constructor-super": "warn",
         "valid-typeof": "warn",
         "flowtype/boolean-style": [2, "boolean"],
@@ -47,14 +53,14 @@ module.exports = {
         "flowtype/no-types-missing-file-annotation": 0
     },
     extends: [
-        "plugin:flowtype/recommended"
+        "plugin:flowtype/recommended",
     ],
     settings: {
         flowtype: {
-            "onlyFilesWithFlowAnnotation": false
-        }
+            "onlyFilesWithFlowAnnotation": false,
+        },
     },
     plugins: [
-        "flowtype"
-    ]
+        "flowtype",
+    ],
 }
